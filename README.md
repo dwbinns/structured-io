@@ -4,7 +4,7 @@ JavaScript read and write structured data to packed byte structures.
 ## Usage ##
 
 ```
-npm install data-io
+npm install structured-io
 ```
 
 ```JavaScript

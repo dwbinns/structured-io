@@ -1,6 +1,6 @@
 {
-  "name": "data-io",
-  "version": "1.0.0",
+  "name": "structured-io",
+  "version": "2.0.0",
   "description": "JavaScript read and write structured data to packed byte structures",
   "main": "src/index.js",
   "directories": {
@@ -15,7 +15,7 @@
   "devDependencies": {
     "tap": "^10.7.1"
   },
-  "repository": "github:dwbinns/data-io",
+  "repository": "github:dwbinns/structured-io",
   "dependencies": {
     "buffer-io": "^1.1.0"
   }
