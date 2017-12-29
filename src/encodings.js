@@ -1,4 +1,7 @@
-class Encoding {}
+class Encoding {
+    read() {}
+    write() {}
+}
 
 const u8 = new class extends Encoding {
     read(bufferReader, context) {
@@ -62,7 +65,7 @@ function interpretEncoding(specification) {
         if (specification[Symbol.iterator]) {
             return sequence(specification);
         }
-        if (specification instanceof Encoding) {
+        if (specification.read && specification.write) {
             return specification;
         }
         if (typeof specification=="object" && Object.keys(specification).length == 1) {
