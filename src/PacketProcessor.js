@@ -1,3 +1,6 @@
+const {interpretEncoding} = require('./encodings');
+const {ResizableBuffer, OverflowError, BufferReader} = require('buffer-io');
+
 module.exports = class PacketProcessor {
     constructor(onPacket, packetType, context) {
         this.onPacket=onPacket;
