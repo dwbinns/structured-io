@@ -57,6 +57,64 @@ const nothing = new class extends Encoding {
 };
 
 
+class AnnotateContext {
+    constructor(bufferReader) {
+        this.bufferReader = bufferReader;
+        this.start = this.bufferReader.index;
+        this.children = [];
+    }
+
+    print(indent) {
+        let position = this.start;
+        for (let child of this.children) {
+            if (position < child.start) console.log(indent, );
+            child.print(indent + "  ");
+            position = child.end;
+        }
+        if (position < this.end) console.log(indent, this.bufferReader.uint8array.subarray(position, this.end).map(v => v.toString(16).padStart(2, '0').join(" ")));
+    }
+
+    child() {
+        let child = new AnnotateContext(this.bufferReader);
+        this.children.push(child);
+        return child;
+    }
+
+    end(text) {
+        this.text = text;
+        this.end = this.bufferReader.index;
+    }
+}
+
+function annotate(annotator, content) {
+    return new class extends Encoding {
+        read(bufferReader, context, value) {
+            try {
+
+                if (context instanceof AnnotateContext) {
+                    let nestedContext = context.child();
+                    let result = content.read(bufferReader, context, value);
+                    nestedContext.end(annotator(result));
+                    return result;
+                }
+                return content.read(bufferReader, context, value);
+
+            } catch (e) {
+                e.stack += `\nIn: ${annotator(value)}`;
+                throw e;
+            }
+        }
+        write(bufferWriter, context, value) {
+            try {
+                content.write(bufferWriter, context, value);
+            } catch (e) {
+                e.stack += `\nIn: ${annotator(value)}`;
+                throw e;
+            }
+        }
+    };
+}
+
 function interpretEncoding(specification) {
     if (specification == null) {
         return nothing;
@@ -75,45 +133,36 @@ function interpretEncoding(specification) {
             return object(specification);
         }
         if (typeof specification == "function") {
-            return conditional(specification);
+            return dynamic(specification);
         }
     }
     throw new Error("Type specification not understood: "+JSON.stringify(specification));
 }
 
-function conditional(condition) {
+function dynamic(factory) {
     return new class extends Encoding {
         read(bufferReader, context, value) {
-            return interpretEncoding(condition(value, context)).read(bufferReader, context, value);
+            return interpretEncoding(factory(value, context)).read(bufferReader, context, value);
         }
         write(bufferWriter, context, value) {
-             interpretEncoding(condition(value, context)).write(bufferWriter, context, value);
+             interpretEncoding(factory(value, context)).write(bufferWriter, context, value);
         }
     };
 }
 
+
 function object(classType) {
     let type = interpretEncoding(classType.encoding);
-    return new class extends Encoding {
+    return annotate(v => `object: ${classType.name}`, new class extends Encoding {
         read(bufferReader, context, value) {
-            try {
-                value = value || new classType();
-                type.read(bufferReader, context, value);
-                return value;
-            } catch (e) {
-                e.stack=e.stack+'\n'+'While reading object: '+classType.name;
-                throw e;
-            }
+            value = value || new classType();
+            type.read(bufferReader, context, value);
+            return value;
         }
         write(bufferWriter, context, value) {
-            try {
-                type.write(bufferWriter, context, value);
-            } catch (e) {
-                e.stack=e.stack+'\n'+'While writing object: '+classType.name;
-                throw e;
-            }
+            type.write(bufferWriter, context, value);
         }
-    };
+    });
 }
 
 function alternative(fieldSpecification, options, defaultValue) {
@@ -190,26 +239,15 @@ function fixed(fieldSpecification, fixedValue) {
 }
 
 
-const auto = new class extends Encoding {
+const auto = annotate(v => `${v.constructor.name}`, new class extends Encoding {
     read(bufferReader, context, value) {
-        try {
-            interpretEncoding(value.constructor.encoding).read(bufferReader, context, value);
-            return value;
-        } catch (e) {
-            e.stack=e.stack+'\n'+'While reading object: '+ (value ? value.constructor.name : '<none>');
-            throw e;
-        }
+        interpretEncoding(value.constructor.encoding).read(bufferReader, context, value);
+        return value;
     }
     write(bufferWriter, context, value) {
-        try {
-            interpretEncoding(value.constructor.encoding).write(bufferWriter, context, value);
-        } catch (e) {
-            e.stack=e.stack+'\n'+'While writing object: '+value.constructor.name;
-            throw e;
-        }
-
+        interpretEncoding(value.constructor.encoding).write(bufferWriter, context, value);
     }
-};
+});
 
 class Lazy {
     constructor(uint8array, context, encoding, value) {
@@ -238,25 +276,15 @@ function lazy(specification) {
 
 function field(name, specification) {
     let type = interpretEncoding(specification);
-    return new class extends Encoding {
+    return annotate(() => `field: ${name}`, new class extends Encoding {
         read(bufferReader, context, value) {
-            try {
-                value[name] = type.read(bufferReader, context, value[name]);
-                return value;
-            } catch (e) {
-                e.stack=e.stack+'\n'+'While reading field: '+name+" of "+(value ? value.constructor.name : '<none>');
-                throw e;
-            }
+            value[name] = type.read(bufferReader, context, value[name]);
+            return value;
         }
         write(bufferWriter, context, value) {
-            try {
-                type.write(bufferWriter, context, value[name]);
-            } catch (e) {
-                e.stack=e.stack+'\n'+'While writing field: '+name+" of "+value.constructor.name;
-                throw e;
-            }
+            type.write(bufferWriter, context, value[name]);
         }
-    };
+    });
 }
 
 function sequence(components) {
@@ -283,7 +311,8 @@ function bytes(size) {
         }
         write(bufferWriter, context, value) {
             //console.log("writebytes",value.length,size);
-            bufferWriter.writeBytes(value);
+            bufferWriter.writeBytes(value.slice(0, size));
+            if (size > value.length) bufferWriter.skip(size - value.length);
         }
     };
 }
@@ -306,121 +335,101 @@ function array(contentSpecification) {
     };
 }
 
-class ReaderRegion {
-    constructor() {
-        //this.size=undefined;
-        this.callbacks=[];
-    }
-    start(bufferReader) {
-        this.bufferReader=bufferReader.subReader();
-        this.callbacks.forEach(callback=>callback(true, this.bufferReader));
-        //if (this.size>=0) this.bufferReader.setSize(this.size);
-        return this.bufferReader;
-    }
-    end(bufferReader) {
-        //bufferReader.eat(this.size>0 ? this.size : this.bufferReader.index-this.bufferReader.start);
-        this.callbacks.forEach(callback=>callback(false, this.bufferReader));
-        bufferReader.eat(this.bufferReader.getReadSize());
+
+function region() {
+    let callbacks = {
+        start: [],
+        end: [],
+    };
+
+    let bufferRW;
+
+    function regionContent(contentSpecification) {
+        let contentEncoding = interpretEncoding(contentSpecification);
+        return new class extends Encoding {
+            read(bufferReader, context, value) {
+
+                let regionReader = bufferReader.subReader();
+                bufferRW = regionReader;
+                callbacks.start.forEach(callback => callback(regionReader));
+                value = contentEncoding.read(regionReader, context, value);
+                callbacks.end.forEach(callback => callback(regionReader));
+                bufferReader.eat(regionReader.getReadSize());
+                return value;
+            }
+            write(bufferWriter, context, value) {
+
+                let regionWriter = bufferWriter.subWriter();
+                bufferRW = regionWriter;
+                callbacks.start.forEach(callback => callback(regionWriter));
+                contentEncoding.write(regionWriter, context, value);
+                callbacks.end.forEach(callback => callback(regionWriter));
+                bufferWriter.skip(regionWriter.getSize());
+            }
+        };
     }
 
-    on(callback) {
-        if (this.bufferReader) {
-            callback(true, this.bufferReader);
-        } else {
-            this.callbacks.push(callback);
-        }
-    }
+    regionContent.on = (event, callback) => {
+        if (event == "start" && bufferRW) callback(bufferRW);
+        else callbacks[event].push(callback);
+    };
 
-/*    setSize(size) {
-        this.size=size;
-        if (this.bufferReader) {
-            this.bufferReader.setSize(size);
-        }
-    }*/
+    return regionContent;
 }
 
-class WriterRegion {
-    constructor() {
-        this.callbacks=[];
-        this.ended=false;
-    }
-    start(bufferWriter) {
-        this.bufferWriter=bufferWriter.subWriter();
-        return this.bufferWriter;
-    }
-    end(bufferWriter) {
-        bufferWriter.skip(this.bufferWriter.getSize());
-        this.ended=true;
-        this.callbacks.forEach(callback=>callback(this.bufferWriter));
-    }
-    on(callback) {
-        if (this.ended) {
-            callback(this.bufferWriter);
-        } else {
-            this.callbacks.push(callback);
-        }
-    }
-}
-
-
-function region(name, content) {
-    let contentEncoder = interpretEncoding(content);
+function scope(factory) {
     return new class extends Encoding {
         read(bufferReader, context, value) {
-            let region=bufferReader.getRegion(name);
-            value = contentEncoder.read(region.start(bufferReader), context, value);
-            region.end(bufferReader);
-            return value;
+            return interpretEncoding(factory(region())).read(bufferReader, context, value);
         }
         write(bufferWriter, context, value) {
-            let region=bufferWriter.getRegion(name);
-            contentEncoder.write(region.start(bufferWriter), context, value);
-            region.end(bufferWriter);
+            interpretEncoding(factory(region())).write(bufferWriter, context, value);
         }
     };
 }
 
-function sizeNamed(sizeSpecification, name) {
+function collect(factory) {
+    return new class extends Encoding {
+        read(bufferReader, context, value) {
+            let result;
+            let collector = resultSpecification => new class extends Encoding {
+                read(bufferReader, context, value) {
+                    result = interpretEncoding(resultSpecification).read(bufferReader, context, value);
+                }
+            };
+            interpretEncoding(factory(collector)).read(bufferReader, context, value);
+            return result;
+        }
+        write(bufferWriter, context, value) {
+            interpretEncoding(factory(resultSpecification => interpretEncoding(resultSpecification))).write(bufferWriter, context, value);
+        }
+    };
+}
+
+
+
+function size(sizeSpecification, sizeScope) {
+    if (!sizeScope.on) return sized(sizeSpecification, sizeScope);
+
     let sizeEncoding = interpretEncoding(sizeSpecification);
     return new class extends Encoding {
         read(bufferReader, context, value) {
             value = sizeEncoding.read(bufferReader, context);
-            bufferReader.getRegion(name).on((start,regionReader)=>start ? regionReader.setSize(value) : regionReader.index=regionReader.index+start);
+            sizeScope.on('start', regionReader => regionReader.setSize(value));
+            sizeScope.on('end', regionReader => regionReader.eatAll());
             return value;
         }
         write(bufferWriter, context, value) {
             let here=bufferWriter.subWriter();
             sizeEncoding.write(bufferWriter, context, 0);
-            bufferWriter.getRegion(name).on((bufferWriter) => sizeEncoding.write(here, context, bufferWriter.getSize()));
+            sizeScope.on('end', regionWriter => sizeEncoding.write(here, context, regionWriter.getSize()));
         }
     };
 }
 
-function sizeRegion(sizeSpecification, targetSpecification) {
-    let sizeEncoding = interpretEncoding(sizeSpecification);
-    let targetEncoding=interpretEncoding(targetSpecification);
-    return new class extends Encoding {
-        read(bufferReader, context, value) {
-            let size = sizeEncoding.read(bufferReader, context);
-            let nestedReader = bufferReader.subReader();
-            nestedReader.setSize(size);
-            bufferReader.eat(size);
-            return targetEncoding.read(nestedReader, context, value);
-        }
-        write(bufferWriter, context, value) {
-            let here=bufferWriter.subWriter();
-            sizeEncoding.write(bufferWriter, context, 0);
-            let nestedWriter=bufferWriter.subWriter();
-            targetEncoding.write(nestedWriter, context,value);
-            bufferWriter.skip(nestedWriter.getSize());
-            sizeEncoding.write(here, context, nestedWriter.getSize());
-        }
-    };
+function sized(sizeSpecification, contentSpecification) {
+    return collect(results => scope(contentScope => [size(sizeSpecification, contentScope), contentScope(results(contentSpecification))]));
 }
 
-function size(sizeSpecification, target) {
-    if (typeof target=="string") return sizeNamed(sizeSpecification, target);
-    return sizeRegion(sizeSpecification, target);
-}
 
-module.exports = {u8, u16BE, u24BE, u32BE, u64BE, auto, type, alternative, fixed, bytes, size, region, array, lazy, Encoding, interpretEncoding};
+module.exports = {u8, u16BE, u24BE, u32BE, u64BE, auto, type, alternative, fixed, bytes, size, sized, scope, array, lazy, Encoding, interpretEncoding, AnnotateContext};
