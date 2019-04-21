@@ -12,13 +12,13 @@ class Body {
     }
 }
 
-Body.encoding = scope(sizeSeparate => [
+Body.encoding = scope("sizeSeparate", sizeSeparate => [
     size(u16BE, sizeSeparate),
     {"content": u24BE},
     {"sizeSeparate": sizeSeparate(bytes())},
     {"sizePrefix": sized(u8, bytes())},
-    scope(sizeIncluded => sizeIncluded([
-        sized(u8, sizeIncluded),
+    scope("sizeIncluded", sizeIncluded => sizeIncluded([
+        size(u8, sizeIncluded),
         {"sizeIncluded": bytes()}
     ])),
     {"bytes": bytes(4)},
@@ -45,7 +45,7 @@ Message.encoding = [
 
 let message=new Message(0, 2, new Body(0x40506, [7, 8, 9], [10, 11, 12, 13]));
 let data = write(message);
-//console.log(explain(data, Message));
+console.log(explain(data, Message));
 console.log('data>',new Uint8Array(data).join(','));
 //console.log(read(data, null, Message));
 tap.same(read(data, null, Message), message, "Round trip succeeded");

@@ -3,21 +3,23 @@ const {OverflowError} = require("buffer-io");
 
 Error.stackTraceLimit = Infinity;
 
+const {min, max, ceil} = Math;
+
 class Encoding {
     read() {}
     write() {}
 }
 
-const u8 = new class extends Encoding {
+const u8 = annotate(v => `u8: ${v}`, new class extends Encoding {
     read(bufferReader, context) {
         return bufferReader.readU8();
     }
     write(bufferWriter, context, value) {
         bufferWriter.writeU8(value);
     }
-};
+});
 
-const u16BE = new class extends Encoding {
+const u16BE = annotate(v => `u16BE: ${v}`, new class extends Encoding {
     read(bufferReader, context) {
         return bufferReader.readU16();
     }
@@ -33,11 +35,18 @@ const u16LE = new class extends Encoding {
     write(bufferWriter, context, value) {
         bufferWriter.writeU16(value, true);
     }
-};
+});
 
+const u16LE = annotate(v => `u16LE: ${v}`, new class extends Encoding {
+    read(bufferReader, context) {
+        return bufferReader.readU16LE();
+    }
+    write(bufferWriter, context, value) {
+        bufferWriter.writeU16LE(value);
+    }
+});
 
-
-const u24BE = new class extends Encoding {
+const u24BE = annotate(v => `u24BE: ${v}`, new class extends Encoding {
     read(bufferReader, context) {
         return bufferReader.readU24();
     }
@@ -53,17 +62,26 @@ const u32LE = new class extends Encoding {
     write(bufferWriter, context, value) {
         bufferWriter.writeU32(value, true);
     }
-};
+});
 
 
-const u32BE = new class extends Encoding {
+const u32BE = annotate(v => `u32BE: ${v}`, new class extends Encoding {
     read(bufferReader, context) {
         return bufferReader.readU32();
     }
     write(bufferWriter, context, value) {
         bufferWriter.writeU32(value);
     }
-};
+});
+
+const u32LE = annotate(v => `u32LE: ${v}`, new class extends Encoding {
+    read(bufferReader, context) {
+        return bufferReader.readU32LE();
+    }
+    write(bufferWriter, context, value) {
+        bufferWriter.writeU32LE(value);
+    }
+});
 
 const u64BEbig = new class extends Encoding {
     read(bufferReader, context) {
@@ -137,20 +155,34 @@ class AnnotateContext {
         this.bufferReader = bufferReader;
         this.start = this.bufferReader.index;
         this.children = [];
+        this.text = '';
     }
 
-    print(indent) {
+    format(from, to) {
+        return new Array(max(1, ceil((to - from) / 8))).fill()
+            .map((_, line) => [...this.bufferReader.uint8array.subarray(from + line * 8, min(to, from + (line + 1) * 8))]
+                .map(v => v.toString(16).padStart(2, '0'))
+                .join(" ")
+                .padEnd(8*3)
+            )
+            .join("\n");
+    }
+
+    print(indent = '') {
+        let first = true;
         let position = this.start;
+        //console.log(this.text, this.start, this.end);
         for (let child of this.children) {
-            if (position < child.start) console.log(indent, );
+            if (position < child.start || first) console.log(`${this.format(position, child.start)}${indent}${this.text}`);
             child.print(indent + "  ");
             position = child.end;
+            first = false;
         }
-        if (position < this.end) console.log(indent, this.bufferReader.uint8array.subarray(position, this.end).map(v => v.toString(16).padStart(2, '0').join(" ")));
+        if (position < this.end) console.log(`${this.format(position, this.end)}${indent}${this.text}`);
     }
 
-    child() {
-        let child = new AnnotateContext(this.bufferReader);
+    child(bufferReader) {
+        let child = new AnnotateContext(bufferReader);
         this.children.push(child);
         return child;
     }
@@ -167,8 +199,8 @@ function annotate(annotator, content) {
             try {
 
                 if (context instanceof AnnotateContext) {
-                    let nestedContext = context.child();
-                    let result = content.read(bufferReader, context, value);
+                    let nestedContext = context.child(bufferReader);
+                    let result = content.read(bufferReader, nestedContext, value);
                     nestedContext.end(annotator(result));
                     return result;
                 }
@@ -191,7 +223,7 @@ function annotate(annotator, content) {
 }
 
 function interpretEncoding(specification) {
-    if (specification == null) {
+    if (specification === null) {
         return nothing;
     }
     if (specification) {
@@ -313,23 +345,9 @@ UnknownType.encoding = [
 
 
 function type(typeSpecification, options, fieldSpecification) {
+    let typeAlternatives=alternative(typeFieldSpecification, options);
     let fieldEncoding = fieldSpecification && interpretEncoding(fieldSpecification);
-    let valueLookup = new Map(Object.entries(options).map(([key, value])=>[value, Number(key)]));
-    let codeLookup = new Map(Object.entries(options).map(([key, value])=>[Number(key), value]));
-
-    function read(code) {
-        if (!codeLookup.has(code)) return new UnknownType(code);
-        return new (codeLookup.get(code));
-    }
-
-    function write(value) {
-        if (value instanceof UnknownType) return value.type;
-        return valueLookup.get(value.constructor);
-    }
-
-    let typeEncoding = transform(typeSpecification, read, write);
-
-    return new class extends Encoding {
+    return annotate(v => `type: ${v ? v.constructor.name : "-"}`, new class extends Encoding {
         read(bufferReader, context, value) {
             let result = typeEncoding.read(bufferReader, context, value);
             if (fieldEncoding) return fieldEncoding.read(bufferReader, context, result);
@@ -339,13 +357,13 @@ function type(typeSpecification, options, fieldSpecification) {
             typeEncoding.write(bufferWriter, context, value);
             if (fieldEncoding) fieldEncoding.write(bufferWriter, context, value);
         }
-    };
+    });
 }
 
 
 function fixed(fieldSpecification, fixedValue) {
     let type = interpretEncoding(fieldSpecification);
-    return new class extends Encoding {
+    return annotate(v => `fixed(${fixedValue})`, new class extends Encoding {
         read(bufferReader, context, value) {
             let readValue= type.read(bufferReader, context, value);
             if (readValue!=fixedValue) {
@@ -356,7 +374,7 @@ function fixed(fieldSpecification, fixedValue) {
         write(bufferWriter, context, value) {
             type.write(bufferWriter, context, fixedValue);
         }
-    };
+    });
 }
 
 
@@ -427,26 +445,55 @@ function sequence(components) {
 }
 
 function bytes(size) {
-    return new class Bytes extends Encoding {
+    return annotate(v => `bytes: ${v.length}`, new class Bytes extends Encoding {
         read(bufferReader, context, value) {
             return bufferReader.readBytes(size);
         }
         write(bufferWriter, context, value) {
             //console.log("writebytes",value.length,size);
-            bufferWriter.writeBytes(value.slice(0, size));
+            bufferWriter.writeBytes(size ? value.slice(0, size) : value);
             if (size > value.length) bufferWriter.skip(size - value.length);
+        }
+    });
+}
+
+function ascii(size) {
+    return annotate(v => `ascii: ${v}`, new class Bytes extends Encoding {
+        read(bufferReader, context, value) {
+            return new TextDecoder("utf8").decode(bufferReader.readBytes(size));
+        }
+        write(bufferWriter, context, value) {
+            //console.log("writebytes",value.length,size);
+            let buffer = Buffer.from(value, "ascii");
+            bufferWriter.writeBytes(size ? buffer.slice(0, size) : buffer);
+            if (size > buffer.length) bufferWriter.skip(size - buffer.length);
+        }
+    });
+}
+
+function ignore(size) {
+    return new class Bytes extends Encoding {
+        read(bufferReader, context, value) {
+            bufferReader.eat(size);
+            return value;
+        }
+        write(bufferWriter, context, value) {
+            bufferWriter.skip(size);
         }
     };
 }
 
-
-function array(contentSpecification) {
+function array(contentSpecification, fixed) {
     let contentEncoding=interpretEncoding(contentSpecification);
     return errorLog(v => `item of array`, true, new class extends Encoding {
         read(bufferReader, context, value) {
-            value = [];
-            while (!bufferReader.eof()) {
-                value.push(contentEncoding.read(bufferReader, context));
+            if (!fixed) {
+                value = [];
+                while (!bufferReader.eof()) {
+                    value.push(contentEncoding.read(bufferReader, context));
+                }
+            } else {
+                value.forEach((v, i) => value[i] = contentEncoding.read(bufferReader, context, v));
             }
             return value;
         }
@@ -480,8 +527,21 @@ function maybe(contentSpecification) {
     };
 }
 
+function length(contentSpecification) {
+    let contentEncoding=interpretEncoding(contentSpecification);
+    return new class extends Encoding {
+        read(bufferReader, context, value) {
+            value = new Array(contentEncoding.read(bufferReader, context)).fill(null);
+            return value;
+        }
+        write(bufferWriter, context, value) {
+            contentEncoding.write(bufferWriter, context, value.length);
+        }
+    };
+}
 
-function region() {
+
+function region(name) {
     let callbacks = {
         start: [],
         end: [],
@@ -491,7 +551,7 @@ function region() {
 
     function regionContent(contentSpecification) {
         let contentEncoding = interpretEncoding(contentSpecification);
-        return new class extends Encoding {
+        return /*annotate(v=>`region:${name}`, */(new class extends Encoding {
             read(bufferReader, context, value) {
 
                 let regionReader = bufferReader.subReader();
@@ -511,8 +571,7 @@ function region() {
                 callbacks.end.forEach(callback => callback(regionWriter));
                 bufferWriter.skip(regionWriter.getSize());
             }
-        };
-
+        });
     }
 
     regionContent.on = (event, callback) => {
@@ -520,18 +579,22 @@ function region() {
         else callbacks[event].push(callback);
     };
 
+    regionContent.scopeName = name;
+
     return regionContent;
 }
 
-function scope(factory) {
-    return new class extends Encoding {
+function scope(name, factory = [name, name = null][0]) {
+    return /*annotate(v=>name,*/(new class extends Encoding {
         read(bufferReader, context, value) {
-            return interpretEncoding(factory(region())).read(bufferReader, context, value);
+            let regions = new Array(factory.length).fill().map(() => region(name));
+            return interpretEncoding(factory(...regions)).read(bufferReader, context, value);
         }
         write(bufferWriter, context, value) {
-            interpretEncoding(factory(region())).write(bufferWriter, context, value);
+            let regions = new Array(factory.length).fill().map(() => region(name));
+            interpretEncoding(factory(...regions)).write(bufferWriter, context, value);
         }
-    };
+    });
 }
 
 function collect(factory) {
@@ -553,29 +616,58 @@ function collect(factory) {
 }
 
 
-function size(sizeSpecification, sizeScope) {
+
+function size(sizeSpecification, options, sizeScope = [options, options = {}][0]) {
     if (!sizeScope.on) return sized(sizeSpecification, sizeScope);
+    
+    let {offset = 0, unit = 1} = typeof options == "number" ? {unit: options} : options;
 
     let sizeEncoding = interpretEncoding(sizeSpecification);
-    return new class extends Encoding {
+    return annotate(v => `size ${sizeScope.scopeName || ''}`, new class extends Encoding {
         read(bufferReader, context, value) {
             value = sizeEncoding.read(bufferReader, context);
-            sizeScope.on('start', regionReader => regionReader.setSize(value));
+            //console.log("size", value, unit, offset);
+            sizeScope.on('start', regionReader => regionReader.setSize(value * unit + offset));
             sizeScope.on('end', regionReader => regionReader.eatAll());
             return value;
         }
         write(bufferWriter, context, value) {
             let here=bufferWriter.subWriter();
             sizeEncoding.write(bufferWriter, context, 0);
-            sizeScope.on('end', regionWriter => sizeEncoding.write(here, context, regionWriter.getSize()));
+            sizeScope.on('end', regionWriter => {
+                let size = regionWriter.getSize();
+                let sizeUnits = ceil(max(0, size - offset) / unit);
+                //console.log("Skip", sizeUnits, unit, size);
+                regionWriter.skip(sizeUnits * unit - size);
+                sizeEncoding.write(here, context, sizeUnits);
+            });
         }
-    };
-}
-
-function sized(sizeSpecification, contentSpecification) {
-    return collect(results => scope(contentScope => [size(sizeSpecification, contentScope), contentScope(results(contentSpecification))]));
+    });
 }
 
 
-module.exports = {u8, u16BE, u24BE, u32BE, u64BE, auto, type, alternative, fixed, bytes, size, sized, scope, array, lazy, Encoding, interpretEncoding, AnnotateContext};
+function pad(padSize, contentSpecification) {
+    let contentEncoding = interpretEncoding(contentSpecification);
+    return annotate(v => `pad ${padSize}`, new class extends Encoding {
+        read(bufferReader, context, value) {
+            let nestedReader = bufferReader.subReader();            
+            value = contentEncoding.read(nestedReader, context, value);
+            let readSize = nestedReader.getReadSize();
+            bufferReader.eat(ceil(readSize / padSize) * padSize);
+            return value;
+        }
+        write(bufferWriter, context, value) {
+            let nestedWriter = bufferWriter.subWriter();
+            contentEncoding.write(nestedWriter, context, value);
+            let size = nestedWriter.getSize();
+            bufferWriter.skip(ceil(size / padSize) * padSize);
+        }
+    });
+}
 
+function sized(sizeSpecification, options, contentSpecification = [options, options = {}][0]) {
+    return collect(results => scope(contentScope => [size(sizeSpecification, options, contentScope), contentScope(results(contentSpecification))]));
+}
+
+
+module.exports = {u8, u16BE, u16LE, u24BE, u32BE, u32LE, u64BE, auto, type, length, alternative, fixed, bytes, ascii, ignore, size, sized, scope, array, lazy, Encoding, interpretEncoding, AnnotateContext, pad};

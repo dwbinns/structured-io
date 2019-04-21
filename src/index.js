@@ -14,13 +14,14 @@ function write(data, context, specification=data.constructor) {
 
 function explain(uint8array, specification) {
     let reader=new BufferReader(uint8array);
-    let context = new AnnotateContext();
+    let context = new AnnotateContext(reader);
     interpretEncoding(specification).read(reader, context);
     context.print();
 }
 
 module.exports = Object.assign({
     PacketProcessor: require('./PacketProcessor'),
+    explain,
     read,
     write,
 }, require('./encodings'));
