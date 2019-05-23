@@ -1,4 +1,5 @@
 const tap = require('tap')
+
 const {u8, u16BE, u24BE, explain, read, write, size, sized, type, auto, fixed, bytes, scope} = require('..');
 
 class Body {
@@ -40,6 +41,7 @@ Message.encoding = [
     })},
     {body: auto},
 ];
+
 
 let message=new Message(0, 2, new Body(0x40506, [7, 8, 9], [10, 11, 12, 13]));
 let data = write(message);

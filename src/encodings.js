@@ -1,3 +1,8 @@
+const AutoMap = require('auto-creating-map');
+const {OverflowError} = require("buffer-io");
+
+Error.stackTraceLimit = Infinity;
+
 class Encoding {
     read() {}
     write() {}
@@ -14,40 +19,78 @@ const u8 = new class extends Encoding {
 
 const u16BE = new class extends Encoding {
     read(bufferReader, context) {
-        return bufferReader.readU16BE();
+        return bufferReader.readU16();
     }
     write(bufferWriter, context, value) {
-        bufferWriter.writeU16BE(value);
+        bufferWriter.writeU16(value);
     }
 };
 
-const u24BE = new class extends Encoding {
+const u16LE = new class extends Encoding {
     read(bufferReader, context) {
-        return bufferReader.readU24BE();
+        return bufferReader.readU16(true);
     }
     write(bufferWriter, context, value) {
-        bufferWriter.writeU24BE(value);
+        bufferWriter.writeU16(value, true);
+    }
+};
+
+
+
+const u24BE = new class extends Encoding {
+    read(bufferReader, context) {
+        return bufferReader.readU24();
+    }
+    write(bufferWriter, context, value) {
+        bufferWriter.writeU24(value);
+    }
+};
+
+const u32LE = new class extends Encoding {
+    read(bufferReader, context) {
+        return bufferReader.readU32(true);
+    }
+    write(bufferWriter, context, value) {
+        bufferWriter.writeU32(value, true);
     }
 };
 
 
 const u32BE = new class extends Encoding {
     read(bufferReader, context) {
-        return bufferReader.readU32BE();
+        return bufferReader.readU32();
     }
     write(bufferWriter, context, value) {
-        bufferWriter.writeU32BE(value);
+        bufferWriter.writeU32(value);
     }
 };
 
-const u64BE = new class extends Encoding {
+const u64BEbig = new class extends Encoding {
     read(bufferReader, context) {
-        return bufferReader.readU64BE();
+        return bufferReader.readU64big();
     }
     write(bufferWriter, context, value) {
-        bufferWriter.writeU64BE(value);
+        bufferWriter.writeU64big(value);
     }
 };
+
+const u64LEbig = new class extends Encoding {
+    read(bufferReader, context) {
+        return bufferReader.readU64big(true);
+    }
+    write(bufferWriter, context, value) {
+        bufferWriter.writeU64big(value, true);
+    }
+};
+
+const cString = new class extends Encoding {
+    read(bufferReader, context) {
+        return bufferReader.readCString();
+    }
+    write(bufferWriter, context, value) {
+        throw new Error("Not yet implemented");
+    }
+}
 
 const nothing = new class extends Encoding {
     read(bufferReader, context) {
@@ -55,6 +98,38 @@ const nothing = new class extends Encoding {
     write(bufferWriter, context, value) {
     }
 };
+
+function align(size) {
+    return new class extends Encoding {
+        read(bufferReader, context) {
+            return bufferReader.align(size);
+        }
+        write(bufferWriter, context, value) {
+            bufferWriter.align(size);
+        }
+    };
+}
+
+
+function aligned(content) {
+    let contentEncoder = interpretEncoding(content);
+    return new class extends Encoding {
+        read(bufferReader, context, value) {
+            let sectionReader = bufferReader.subReader();
+            sectionReader.settings.align = true;
+            value = contentEncoder.read(sectionReader, context, value);
+            bufferReader.eat(sectionReader.getReadSize());
+            return value;
+        }
+        write(bufferWriter, context, value) {
+            let sectionWriter = bufferWriter.subWriter();
+            sectionWriter.settings.align = true;
+            contentEncoder.write(sectionWriter, context, value);
+            bufferWriter.skip(sectionWriter.getSize());
+        }
+    };
+}
+
 
 
 class AnnotateContext {
@@ -129,6 +204,7 @@ function interpretEncoding(specification) {
         if (typeof specification=="object" && Object.keys(specification).length == 1) {
             return field(Object.keys(specification)[0],Object.values(specification)[0]);
         }
+
         if (specification.encoding) {
             return object(specification);
         }
@@ -151,6 +227,7 @@ function dynamic(factory) {
 }
 
 
+
 function object(classType) {
     let type = interpretEncoding(classType.encoding);
     return annotate(v => `object: ${classType.name}`, new class extends Encoding {
@@ -165,28 +242,48 @@ function object(classType) {
     });
 }
 
-function alternative(fieldSpecification, options, defaultValue) {
-    let fieldEncoding = interpretEncoding(fieldSpecification);
-    let valueLookup = new Map(Object.entries(options).map(([key, value])=>[value, Number(key)]));
-    let codeLookup = new Map(Object.entries(options).map(([key, value])=>[Number(key), value]));
-    return new class extends Encoding {
+function object(classType, encoding=classType.encoding) {
+    let type = interpretEncoding(encoding);
+
+    return annotate(() => `object ${classType.name}`, new class extends Encoding {
         read(bufferReader, context, value) {
-            let code= fieldEncoding.read(bufferReader, context, value);
-            if (!codeLookup.has(code)) {
-                if (defaultValue!==undefined) {
-                    return defaultValue;
-                }
-                throw new Error("Unknown code: "+code);
-            }
-            return codeLookup.get(code);
+            value = value || new classType();
+            type.read(bufferReader, context, value);
+            return value;
         }
         write(bufferWriter, context, value) {
-            if (!valueLookup.has(value)) {
-                throw new Error("Unknown option: "+value);
-            }
-            fieldEncoding.write(bufferWriter, context, valueLookup.get(value));
+            type.write(bufferWriter, context, value);
+        }
+    });
+}
+
+function transform(fieldSpecification, read, write) {
+    let fieldEncoding = interpretEncoding(fieldSpecification);
+    return new class extends Encoding {
+        read(bufferReader, context, value) {
+            return read(fieldEncoding.read(bufferReader, context));
+        }
+        write(bufferWriter, context, value) {
+            fieldEncoding.write(bufferWriter, context, write(value));
         }
     };
+}
+
+function alternative(fieldSpecification, options) {
+    let valueLookup = new Map(Object.entries(options).map(([key, value])=>[value, Number(key)]));
+    let codeLookup = new Map(Object.entries(options).map(([key, value])=>[Number(key), value]));
+
+    function read(code) {
+        if (!codeLookup.has(code)) throw new Error("Unknown code: "+code);
+        return codeLookup.get(code);
+    }
+
+    function write(value) {
+        if (!valueLookup.has(value)) throw new Error("Unknown option: "+value);
+        return valueLookup.get(value);
+    }
+
+    return transform(fieldSpecification, read, write);
 }
 
 
@@ -204,18 +301,42 @@ function encodingLookup(encodingFieldSpecification, options, content) {
     };
 }
 
+class UnknownType {
+    constructor(type) {
+        this.type = type;
+        this.data = null;
+    }
+}
+UnknownType.encoding = [
+    {data: bytes}
+];
 
-function type(typeFieldSpecification, options, fieldSpecification) {
-    let typeAlternatives=alternative(typeFieldSpecification, options);
+
+function type(typeSpecification, options, fieldSpecification) {
     let fieldEncoding = fieldSpecification && interpretEncoding(fieldSpecification);
+    let valueLookup = new Map(Object.entries(options).map(([key, value])=>[value, Number(key)]));
+    let codeLookup = new Map(Object.entries(options).map(([key, value])=>[Number(key), value]));
+
+    function read(code) {
+        if (!codeLookup.has(code)) return new UnknownType(code);
+        return new (codeLookup.get(code));
+    }
+
+    function write(value) {
+        if (value instanceof UnknownType) return value.type;
+        return valueLookup.get(value.constructor);
+    }
+
+    let typeEncoding = transform(typeSpecification, read, write);
+
     return new class extends Encoding {
         read(bufferReader, context, value) {
-            let instance = new (typeAlternatives.read(bufferReader, context));
-            if (fieldEncoding) return fieldEncoding.read(bufferReader, context, instance);
-            return instance;
+            let result = typeEncoding.read(bufferReader, context, value);
+            if (fieldEncoding) return fieldEncoding.read(bufferReader, context, result);
+            return result;
         }
         write(bufferWriter, context, value) {
-            typeAlternatives.write(bufferWriter, context, value.constructor);
+            typeEncoding.write(bufferWriter, context, value);
             if (fieldEncoding) fieldEncoding.write(bufferWriter, context, value);
         }
     };
@@ -291,10 +412,11 @@ function sequence(components) {
     let types = components.map(interpretEncoding);
     return new class extends Encoding {
         read(bufferReader, context, value) {
+            let result;
             for (let type of types) {
-                type.read(bufferReader, context, value);
+                result = type.read(bufferReader, context, value);
             }
-            return value;
+            return result;
         }
         write(bufferWriter, context, value) {
             for (let type of types) {
@@ -317,9 +439,10 @@ function bytes(size) {
     };
 }
 
+
 function array(contentSpecification) {
     let contentEncoding=interpretEncoding(contentSpecification);
-    return new class extends Encoding {
+    return errorLog(v => `item of array`, true, new class extends Encoding {
         read(bufferReader, context, value) {
             value = [];
             while (!bufferReader.eof()) {
@@ -331,6 +454,28 @@ function array(contentSpecification) {
             for (let item of value) {
                 contentEncoding.write(bufferWriter, context, item);
             }
+        }
+    });
+}
+
+function maybe(contentSpecification) {
+    let contentEncoding=interpretEncoding(contentSpecification);
+    return new class extends Encoding {
+        read(bufferReader, context, value) {
+            let maybeReader = bufferReader.subReader();
+            try {
+                value = contentEncoding.read(maybeReader, context, value);
+                bufferReader.eat(maybeReader.getReadSize());
+                return value;
+            } catch (e) {
+                if (!(e instanceof OverflowError)) {
+                    throw e;
+                }
+                bufferReader.readBytes();
+            }
+        }
+        write(bufferWriter, context, value) {
+            contentEncoding.write(bufferWriter, context, value);
         }
     };
 }
@@ -367,6 +512,7 @@ function region() {
                 bufferWriter.skip(regionWriter.getSize());
             }
         };
+
     }
 
     regionContent.on = (event, callback) => {
@@ -407,7 +553,6 @@ function collect(factory) {
 }
 
 
-
 function size(sizeSpecification, sizeScope) {
     if (!sizeScope.on) return sized(sizeSpecification, sizeScope);
 
@@ -433,3 +578,4 @@ function sized(sizeSpecification, contentSpecification) {
 
 
 module.exports = {u8, u16BE, u24BE, u32BE, u64BE, auto, type, alternative, fixed, bytes, size, sized, scope, array, lazy, Encoding, interpretEncoding, AnnotateContext};
+
