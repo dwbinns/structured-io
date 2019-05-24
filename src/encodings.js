@@ -5,6 +5,8 @@ Error.stackTraceLimit = Infinity;
 
 const {min, max, ceil} = Math;
 
+const {min, max, ceil} = Math;
+
 class Encoding {
     read() {}
     write() {}
@@ -53,7 +55,16 @@ const u24BE = annotate(v => `u24BE: ${v}`, new class extends Encoding {
     write(bufferWriter, context, value) {
         bufferWriter.writeU24(value);
     }
-};
+});
+
+const u16LE = annotate(v => `u16LE: ${v}`, new class extends Encoding {
+    read(bufferReader, context) {
+        return bufferReader.readU16LE();
+    }
+    write(bufferWriter, context, value) {
+        bufferWriter.writeU16LE(value);
+    }
+});
 
 const u32LE = new class extends Encoding {
     read(bufferReader, context) {
@@ -90,7 +101,16 @@ const u64BEbig = new class extends Encoding {
     write(bufferWriter, context, value) {
         bufferWriter.writeU64big(value);
     }
-};
+});
+
+const u32LE = annotate(v => `u32LE: ${v}`, new class extends Encoding {
+    read(bufferReader, context) {
+        return bufferReader.readU32LE();
+    }
+    write(bufferWriter, context, value) {
+        bufferWriter.writeU32LE(value);
+    }
+});
 
 const u64LEbig = new class extends Encoding {
     read(bufferReader, context) {
@@ -166,6 +186,17 @@ class AnnotateContext {
                 .padEnd(8*3)
             )
             .join("\n");
+        this.text = '';
+    }
+
+    format(from, to) {
+        return new Array(max(1, ceil((to - from) / 8))).fill()
+            .map((_, line) => [...this.bufferReader.uint8array.subarray(from + line * 8, min(to, from + (line + 1) * 8))]
+                .map(v => v.toString(16).padStart(2, '0'))
+                .join(" ")
+                .padEnd(8*3)
+            )
+            .join("\n");
     }
 
     print(indent = '') {
@@ -178,7 +209,7 @@ class AnnotateContext {
             position = child.end;
             first = false;
         }
-        if (position < this.end) console.log(`${this.format(position, this.end)}${indent}${this.text}`);
+        if (position < this.end) console.log(indent, this.bufferReader.uint8array.subarray(position, this.end).map(v => v.toString(16).padStart(2, '0').join(" ")));
     }
 
     child(bufferReader) {
@@ -347,7 +378,11 @@ UnknownType.encoding = [
 function type(typeSpecification, options, fieldSpecification) {
     let typeAlternatives=alternative(typeFieldSpecification, options);
     let fieldEncoding = fieldSpecification && interpretEncoding(fieldSpecification);
+<<<<<<< /tmp/base
+    return new class extends Encoding {
+=======
     return annotate(v => `type: ${v ? v.constructor.name : "-"}`, new class extends Encoding {
+>>>>>>> /tmp/theirs
         read(bufferReader, context, value) {
             let result = typeEncoding.read(bufferReader, context, value);
             if (fieldEncoding) return fieldEncoding.read(bufferReader, context, result);
@@ -357,13 +392,21 @@ function type(typeSpecification, options, fieldSpecification) {
             typeEncoding.write(bufferWriter, context, value);
             if (fieldEncoding) fieldEncoding.write(bufferWriter, context, value);
         }
+<<<<<<< /tmp/base
+    };
+=======
     });
+>>>>>>> /tmp/theirs
 }
 
 
 function fixed(fieldSpecification, fixedValue) {
     let type = interpretEncoding(fieldSpecification);
+<<<<<<< /tmp/base
+    return new class extends Encoding {
+=======
     return annotate(v => `fixed(${fixedValue})`, new class extends Encoding {
+>>>>>>> /tmp/theirs
         read(bufferReader, context, value) {
             let readValue= type.read(bufferReader, context, value);
             if (readValue!=fixedValue) {
@@ -374,7 +417,11 @@ function fixed(fieldSpecification, fixedValue) {
         write(bufferWriter, context, value) {
             type.write(bufferWriter, context, fixedValue);
         }
+<<<<<<< /tmp/base
+    };
+=======
     });
+>>>>>>> /tmp/theirs
 }
 
 
@@ -540,6 +587,19 @@ function length(contentSpecification) {
     };
 }
 
+function length(contentSpecification) {
+    let contentEncoding=interpretEncoding(contentSpecification);
+    return new class extends Encoding {
+        read(bufferReader, context, value) {
+            value = new Array(contentEncoding.read(bufferReader, context)).fill(null);
+            return value;
+        }
+        write(bufferWriter, context, value) {
+            contentEncoding.write(bufferWriter, context, value.length);
+        }
+    };
+}
+
 
 function region(name) {
     let callbacks = {
@@ -619,7 +679,6 @@ function collect(factory) {
 
 function size(sizeSpecification, options, sizeScope = [options, options = {}][0]) {
     if (!sizeScope.on) return sized(sizeSpecification, sizeScope);
-    
     let {offset = 0, unit = 1} = typeof options == "number" ? {unit: options} : options;
 
     let sizeEncoding = interpretEncoding(sizeSpecification);
@@ -644,7 +703,6 @@ function size(sizeSpecification, options, sizeScope = [options, options = {}][0]
         }
     });
 }
-
 
 function pad(padSize, contentSpecification) {
     let contentEncoding = interpretEncoding(contentSpecification);
