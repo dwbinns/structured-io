@@ -8,32 +8,21 @@ npm install structured-io
 ```
 
 ```JavaScript
-const {u24BE, auto, u8, read, write} = require('data-io');
-
-class Body {
-    constructor() {
-        this.content=1056816;
-    }
-}
-
-Body.encoding = [
-    {"content":u24BE},
-];
+const {u8, fields, read, write} = require('structured-io');
 
 class Message {
-    constructor() {
-        this.version=1;
-        this.body=new Body();
+    constructor(version) {
+        this.version = version;
     }
 }
 
-Message.encoding = [
-    {version:u8},
-    {body:auto},
-];
-let message=new Message();
-let data=write(new Message());
-let received = read(data, null, Message);
-console.log(message);
-console.log(received);
+Message.encoding = fields({
+    version:u8(),
+});
+
+let message = new Message(1);
+let data = write(message);
+let received = read(data, Message);
+console.log(message, received, "hi");
+JSON.stringify(message) == JSON.stringify(received);
 ```

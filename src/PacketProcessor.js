@@ -1,4 +1,4 @@
-const {interpretEncoding} = require('./encodings');
+const Encoding = require('./Encoding');
 const {ResizableBuffer, OverflowError, BufferReader} = require('buffer-io');
 
 module.exports = class PacketProcessor {
@@ -11,7 +11,7 @@ module.exports = class PacketProcessor {
         //console.log("processor",packetType);
     }
     setEncoding(packetType) {
-        this.encoding=interpretEncoding(packetType);
+        this.encoding = Encoding.get(packetType);
     }
     attach(readable) {
         readable.on('data', chunk => this.write(chunk));
@@ -25,6 +25,7 @@ module.exports = class PacketProcessor {
         this.onPacket = onPacket;
     }
     write(uint8array) {
+        //console.log("got", this.size, uint8array.length);
         this.resizableBuffer.get(this.size + uint8array.length).uint8array.set(uint8array,this.size);
         this.size+=uint8array.length;
 
@@ -34,12 +35,15 @@ module.exports = class PacketProcessor {
                 let bufferReader=new BufferReader(this.resizableBuffer.uint8array.subarray(0,this.size));
                 let result = this.encoding.read(bufferReader, this.context);
                 let readSize = bufferReader.index;
-                //console.log('processed',result);
-                this.onPacket(result, this.resizableBuffer.uint8array.subarray(0,readSize));
-                this.size -=readSize;
+
+                let readData = this.resizableBuffer.uint8array.subarray(0,readSize);
+                //console.log('processed',readSize);
+                //require(".").explain(readData, this.encoding);
+                this.onPacket(result, readData);
+                this.size -= readSize;
                 this.resizableBuffer.trim(readSize);
             } catch (e) {
-                console.log(e);
+                //console.log("no parse", e);
                 if (!(e instanceof OverflowError)) {
                     //console.log('failed',e);
                     throw e;
