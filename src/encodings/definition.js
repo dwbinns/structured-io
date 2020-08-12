@@ -67,20 +67,29 @@ class Define extends Encoding {
     constructor(definition, contentEncoding) {
         super();
         this.definition = definition;
-        this.contentEncoding = Encoding.get(contentEncoding);
+        if (typeof contentEncoding == "function") {
+            this.contentTransform = contentEncoding;
+        } else {
+            this.contentEncoding = Encoding.get(contentEncoding);
+        }
     }
 
     read(bufferReader, context, value) {
-        let result = this.contentEncoding.read(bufferReader, context, value);
+        let result = this.contentEncoding
+            ? this.contentEncoding.read(bufferReader, context, value)
+            : this.contentTransform(value);
         this.definition.getScope().set(result);
         return result;
     }
+    
     write(bufferWriter, context, value) {
-        let here=bufferWriter.nestedWriter();
-        this.contentEncoding.write(bufferWriter, context, 0);
-        this.definition.getScope().listen((value) => {
-            this.contentEncoding.write(here, context, value);
-        });
+        if (this.contentEncoding) {
+            let here=bufferWriter.nestedWriter();
+            this.contentEncoding.write(bufferWriter, context, 0);
+            this.definition.getScope().listen((value) => {
+                this.contentEncoding.write(here, context, value);
+            });
+        }
     }
 }
 

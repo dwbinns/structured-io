@@ -1,12 +1,12 @@
-const auto = require("./auto");
 const ScopeFactory = require("../definitions/ScopeFactory");
 const Encoding = require("../Encoding");
 const annotate = require("../annotate");
 
 class Type extends Encoding {
-    constructor(type, options, defaultClass) {
+    constructor(type, options, defaultClass, defaultField = "code") {
         super();
         if (defaultClass && typeof defaultClass != "function") throw new Error("DefaultClass is not a function");
+        this.defaultField = defaultField;
         this.defaultClass = defaultClass;
         this.type = new ScopeFactory(type);
         Object.values(options).forEach(Encoding.get);
@@ -32,7 +32,7 @@ class Type extends Encoding {
 
         let code;
         if (this.defaultClass && value instanceof this.defaultClass) {
-            code = value.code;
+            code = value[this.defaultField];
         } else {
             if (!this.codeLookup.has(value.constructor)) throw new Error(`Unknown type ${value.constructor}`);
             code = this.codeLookup.get(value.constructor);

@@ -10,7 +10,7 @@ class ScopeFactory {
         } else if (definition.getScope) {
             this.definition = definition;
         } else {
-            throw new Error("Not an encoding or a definition");
+            throw new Encoding.NotAnEncoding("Not an encoding or a definition");
         }
     }
 

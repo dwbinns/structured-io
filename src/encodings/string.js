@@ -9,7 +9,7 @@ class String extends Encoding {
     }
 
     read(bufferReader, context, value) {
-        return bufferReader.readBytes(this.size).toString(this.encoding);
+        return Buffer.from(bufferReader.readBytes(this.size)).toString(this.encoding);
     }
     write(bufferWriter, context, value) {
         //console.log("writebytes",value.length,size);

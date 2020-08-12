@@ -22,4 +22,5 @@ class Configure extends Encoding {
     }
 }
 
-module.exports = (where, ...args) => new Configure(...args);
+module.exports = (configuration) => 
+    (where, contentEncoding) => new Configure(configuration, contentEncoding);

@@ -2,42 +2,44 @@ const Encoding = require("./Encoding");
 
 module.exports = {
     PacketProcessor: require("./PacketProcessor"),
-    ...exceptionWrapAll({
-        u8: require("./encodings/u8"),
-        u16: require("./encodings/u16"),
-        u24: require("./encodings/u24"),
-        u32: require("./encodings/u32"),
-        auto: require("./encodings/auto"),
-        explain: require("./annotate/explain"),
-        read: require("./read"), 
-        write: require("./write"), 
-        definition: require("./encodings/definition"),
-        sequence: require("./encodings/sequence"),
-        fields: require("./encodings/fields"),
-        fixed: require("./encodings/fixed"),
-        size: require("./encodings/size"),
-        //sized: require("./encodings/sized"),
-        type: require("./encodings/type"),
-        //typed: require("./encodings/typed"),
-        dynamic: require("./encodings/dynamic"),
-        bytes: require("./encodings/bytes"),
-        ofClass: require("./encodings/ofClass"),
-        pad: require("./encodings/pad"),
-        ignore: require("./encodings/ignore"),
-        array: require("./encodings/array"),
-        string: require("./encodings/string"),
-        latin1: require("./encodings/latin1"),
-        ascii: require("./encodings/ascii"),
-        ...require("./encodings/configurations"),
-    })
+    
+    u8: wrap(require("./encodings/u8")),
+    u16: wrap(require("./encodings/u16")),
+    u24: wrap(require("./encodings/u24")),
+    u32: wrap(require("./encodings/u32")),
+    auto: wrap(require("./encodings/auto")),
+    explain: wrap(require("./annotate/explain")),
+    read: wrap(require("./read")), 
+    write: wrap(require("./write")), 
+    definition: wrap(require("./encodings/definition")),
+    sequence: wrap(require("./encodings/sequence")),
+    condition: wrap(require("./encodings/condition")),
+    bitSet: wrap(require("./encodings/bitSet")),
+    fields: wrap(require("./encodings/fields")),
+    fixed: wrap(require("./encodings/fixed")),
+    size: wrap(require("./encodings/size")),
+    //sized: wrap(require("./encodings/sized")),
+    type: wrap(require("./encodings/type")),
+    //typed: wrap(require("./encodings/typed")),
+    dynamic: wrap(require("./encodings/dynamic")),
+    bytes: wrap(require("./encodings/bytes")),
+    ofClass: wrap(require("./encodings/ofClass")),
+    pad: wrap(require("./encodings/pad")),
+    ignore: wrap(require("./encodings/ignore")),
+    array: wrap(require("./encodings/array")),
+    string: wrap(require("./encodings/string")),
+    latin1: wrap(require("./encodings/latin1")),
+    ascii: wrap(require("./encodings/ascii")),
+    bigEndian: wrap(require("./encodings/configure")({littleEndian: false})),
+    littleEndian: wrap(require("./encodings/configure")({littleEndian: true})),
 };
 
 function getStackCodeLocation(stack, offset) {
     return stack.split("\n")[offset].replace(/.* \(?([^) ()]*)\)? */, "$1");
 }
 
-function exceptionWrap(fn) {
-    function encoding(...args) {
+function wrap(fn) {
+    function wrapped(...args) {
         let capture = new Error("capture");
         let here = getStackCodeLocation(capture.stack, 1).split("/");
         let where = getStackCodeLocation(capture.stack, 2).split("/");
@@ -47,23 +49,14 @@ function exceptionWrap(fn) {
         } catch (e) {
             if (e instanceof Encoding.NotAnEncoding && !e.captured) {
                 e.captured = true;
-                Error.captureStackTrace(e, encoding);
+                Error.captureStackTrace(e, wrapped);
             }
             throw e;
         }
     };
-    return encoding;
+    return wrapped;
 }
 
-function exceptionWrapAll(definitions) {
-    let wrappedDefinitions = {};
-    for (let [key, value] of Object.entries(definitions)) {
-        wrappedDefinitions[key] = (typeof value == "function")
-            ? exceptionWrap(value)
-            : value;
-    }
-    return wrappedDefinitions;
-}
 
 
 /*const {BufferReader, BufferWriter} = require('buffer-io');

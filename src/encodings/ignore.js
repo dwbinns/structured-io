@@ -1,4 +1,3 @@
-const Annotator = require("../annotate/Annotator");
 const Encoding = require("../Encoding");
 const annotate = require("../annotate");
 

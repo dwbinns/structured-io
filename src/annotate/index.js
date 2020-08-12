@@ -9,6 +9,12 @@ function annotate(annotator, encodingClass) {
         return new Annotator(where, (v) => annotator(v, ...args), new encodingClass(...args))
     } 
 
+    function internal(...args) {
+        return new encodingClass(...args);
+    }
+
+    create.internal = internal;
+
     return create;
 };
 

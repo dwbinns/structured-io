@@ -60,4 +60,6 @@ let data = write(writeMessage);
 //console.log('data>',new Uint8Array(data).join(','));
 console.log(explain(data, Message));
 let readMessage = read(data, Message);
+// @ts-ignore
 tap.same(readMessage, writeMessage, "Round trip succeeded");
+

@@ -1,7 +1,5 @@
 const ScopeFactory = require("../definitions/ScopeFactory");
-const Annotator = require("../annotate/Annotator");
 const Encoding = require("../Encoding");
-const annotate = require("../annotate");
 const {max, ceil} = Math;
 
 class Size extends Encoding {

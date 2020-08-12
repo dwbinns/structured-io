@@ -1,5 +1,4 @@
 const Encoding = require("../Encoding");
-const annotate = require("../annotate");
 
 class Sequence extends Encoding {
     constructor(components) {
