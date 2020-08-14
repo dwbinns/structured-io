@@ -1,6 +1,6 @@
 const tap = require('tap')
 
-const {u8, u16BE, u24BE, explain, read, write, size, sized, type, auto, fixed, bytes, scope} = require('..');
+const {u8, u16, u24, explain, read, write, size, sized, type, auto, fixed, bytes, scope, none, dynamic, sequence, field, instance} = require('..');
 
 class Body {
     constructor(content, variable = [], bytes = []) {
@@ -12,17 +12,17 @@ class Body {
     }
 }
 
-Body.encoding = scope("sizeSeparate", sizeSeparate => [
-    size(u16BE, sizeSeparate),
-    {"content": u24BE},
-    {"sizeSeparate": sizeSeparate(bytes())},
-    {"sizePrefix": sized(u8, bytes())},
-    scope("sizeIncluded", sizeIncluded => sizeIncluded([
-        size(u8, sizeIncluded),
-        {"sizeIncluded": bytes()}
-    ])),
-    {"bytes": bytes(4)},
-]);
+Body.encoding = scope("sizeSeparate", sizeSeparate => sequence(
+    size(u16, {}, sizeSeparate),
+    field("content", u24),
+    field("sizeSeparate", sizeSeparate(bytes())),
+    field("sizePrefix", sized(u8, {}, bytes())),
+    scope("sizeIncluded", sizeIncluded => sizeIncluded(sequence(
+        size(u8, {}, sizeIncluded),
+        field("sizeIncluded", bytes()),
+    ))),
+    field("bytes", bytes(4)),
+));
 
 class Message {
     constructor(version, extra, body) {
@@ -32,20 +32,20 @@ class Message {
     }
 }
 
-Message.encoding = [
-    {version: u8},
+Message.encoding = sequence(
+    field("version", u8),
     fixed(u8, 1),
-    v => v.version >= 0 ? {extra:u8} : [],
-    {body: type(u8, {
+    dynamic(v => v.version >= 0 ? field("extra", u8) : none()),
+    field("body", type(u8, {
         3: Body
-    })},
-    {body: auto},
-];
+    })),
+    field("body", auto),
+);
 
 
 let message=new Message(0, 2, new Body(0x40506, [7, 8, 9], [10, 11, 12, 13]));
 let data = write(message);
-console.log(explain(data, Message));
+explain(data, instance(Message));
 console.log('data>',new Uint8Array(data).join(','));
 //console.log(read(data, null, Message));
-tap.same(read(data, null, Message), message, "Round trip succeeded");
+tap.same(read(data, null, instance(Message)), message, "Round trip succeeded");

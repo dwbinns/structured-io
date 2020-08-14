@@ -28,8 +28,8 @@ class Message {
 }
 
 Message.encoding = [
-    {version:u8},
-    {body:auto},
+    field('version', u8),
+    field('body', auto),
 ];
 let message=new Message();
 let data=write(new Message());

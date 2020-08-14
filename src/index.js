@@ -1,27 +1,35 @@
-const {BufferReader, BufferWriter} = require('buffer-io');
-const {interpretEncoding, AnnotateContext} = require('./encodings');
 
-function read(uint8array, context, specification) {
-    let reader=new BufferReader(uint8array);
-    return interpretEncoding(specification).read(reader, context);
-}
-
-function write(data, context, specification=data.constructor) {
-    let writer=new BufferWriter();
-    interpretEncoding(specification).write(writer, context, data);
-    return writer.getUint8Array();
-}
-
-function explain(uint8array, specification) {
-    let reader=new BufferReader(uint8array);
-    let context = new AnnotateContext(reader);
-    interpretEncoding(specification).read(reader, context);
-    context.print();
-}
-
-module.exports = Object.assign({
+module.exports = {
+    Encoding: require('./Encoding'),
     PacketProcessor: require('./PacketProcessor'),
-    explain,
-    read,
-    write,
-}, require('./encodings'));
+    read: require('./read'),
+    write: require('./write'),
+    explain: require('./explain'),
+    annotate: require('./encodings/annotate'),
+    array: require('./encodings/array'),
+    arrayLength: require('./encodings/arrayLength'),
+    auto: require('./encodings/auto'),
+    bytes: require('./encodings/bytes'),
+    call: require('./encodings/call'),
+    collect: require('./encodings/collect'),
+    dynamic: require('./encodings/dynamic'),
+    field: require('./encodings/field'),
+    fixed: require('./encodings/fixed'),
+    ignore: require('./encodings/ignore'),
+    instance: require('./encodings/instance'),
+    nothing: require('./encodings/nothing'),
+    optional: require('./encodings/optional'),
+    pad: require('./encodings/pad'),
+    scope: require('./encodings/scope'),
+    sequence: require('./encodings/sequence'),
+    size: require('./encodings/size'),
+    sized: require('./encodings/sized'),
+    string: require('./encodings/string'),
+    transform: require('./encodings/transform'),
+    type: require('./encodings/type'),
+    u8: require('./encodings/u8'),
+    u16: require('./encodings/u16'),
+    u24: require('./encodings/u24'),
+    u32: require('./encodings/u32'),
+    u64bigint: require('./encodings/u64bigint'),
+};
