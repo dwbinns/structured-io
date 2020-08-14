@@ -1,9 +1,9 @@
 const { BufferWriter } = require('buffer-io');
 const auto = require('./encodings/auto');
-const instance = require('./encodings/instance');
+const getEncoding = require('./getEncoding');
 
-module.exports = function write(data, context, encoding = auto) {
+module.exports = function write(data, context, encoding = auto()) {
     let writer = new BufferWriter();
-    encoding.write(writer, context, data);
+    getEncoding(encoding).write(writer, context, data);
     return writer.getUint8Array();
 }

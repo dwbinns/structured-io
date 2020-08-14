@@ -1,5 +1,5 @@
 const { BufferReader } = require('buffer-io');
-const AnnotateContext = require('./AnnotateContext');
+const AnnotateContext = require('./annotate/AnnotateContext');
 const getEncoding = require('./getEncoding');
 
 

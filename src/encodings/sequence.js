@@ -1,19 +1,22 @@
 const Encoding = require("../Encoding");
+const getEncoding = require("../getEncoding");
 
-module.exports = function sequence(...componentEncodings) {
-    componentEncodings.forEach(Encoding.check);
-    return new class SequenceEncoding extends Encoding {
-        read(bufferReader, context, value) {
-            let result;
-            for (let encoding of componentEncodings) {
-                result = encoding.read(bufferReader, context, value);
-            }
-            return result;
+class Sequence extends Encoding {
+    constructor(components) {
+        super();
+        this.components = components.map(getEncoding);
+    }
+
+    read(bufferReader, context, value) {
+        this.components.forEach(type => type.read(bufferReader, context, value));
+        return value;
+    }
+
+    write(bufferWriter, context, value) {
+        for (let type of this.components) {
+            type.write(bufferWriter, context, value);
         }
-        write(bufferWriter, context, value) {
-            for (let encoding of componentEncodings) {
-                encoding.write(bufferWriter, context, value);
-            }
-        }
-    };
+    }
 }
+
+module.exports = (...components) => new Sequence(components);

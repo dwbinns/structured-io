@@ -1,12 +1,21 @@
 const Encoding = require("../Encoding");
+const annotate = require("../annotate");
+const getEncoding = require("../getEncoding");
 
-module.exports = function dynamic(handler) {
-    return new class extends Encoding {
-        read(bufferReader, context, value) {
-            return handler(value, context).read(bufferReader, context, value);
-        }
-        write(bufferWriter, context, value) {
-            handler(value, context).write(bufferWriter, context, value);
-        }
-    };
+class Dynamic extends Encoding {
+    constructor(encodingFactory) {
+        super();
+        this.encodingFactory = encodingFactory;
+    }
+
+    read(bufferReader, context, value) {
+        getEncoding(this.encodingFactory(value, context)).read(bufferReader, context, value);
+        return value;
+    }
+
+    write(bufferWriter, context, value) {
+        getEncoding(this.encodingFactory(value, context)).write(bufferWriter, context, value);
+    }
 }
+
+module.exports = (encodingFactory) => new Dynamic(encodingFactory);

@@ -1,18 +1,23 @@
-const annotate = require("./annotate");
+const annotate = require("../annotate");
 const Encoding = require("../Encoding");
+const getEncoding = require("../getEncoding");
 
-module.exports = function fixed(encoding, fixedValue) {
-
-    return annotate(v => `fixed(${fixedValue})`, new class extends Encoding {
-        read(bufferReader, context, value) {
-            let readValue = encoding.read(bufferReader, context, value);
-            if (readValue != fixedValue) {
-                throw new Error(`Unexpected value, read:${readValue}, expected: ${fixedValue}`);
-            }
-            return readValue;
+class Fixed extends Encoding {
+    constructor(encoding, value) {
+        super();
+        this.encoding = getEncoding(encoding);
+        this.value = value;
+    }
+    read(bufferReader, context, value) {
+        let readValue= this.encoding.read(bufferReader, context, value);
+        if (readValue != this.value) {
+            throw new Error(`Unexpected value, read:${readValue}, expected: ${this.value}`);
         }
-        write(bufferWriter, context, value) {
-            encoding.write(bufferWriter, context, fixedValue);
-        }
-    });
+        return readValue;
+    }
+    write(bufferWriter, context, value) {
+        this.encoding.write(bufferWriter, context, this.value);
+    }
 }
+
+module.exports = annotate((v, encoding, value) => `fixed(${value})`, Fixed);

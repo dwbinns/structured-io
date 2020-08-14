@@ -9,11 +9,11 @@ module.exports = function collect(factory) {
                     result = resultEncoding.read(bufferReader, context, value);
                 }
             };
-            Encoding.check(factory(collector)).read(bufferReader, context, value);
+            getEncoding(factory(collector)).read(bufferReader, context, value);
             return result;
         }
         write(bufferWriter, context, value) {
-            Encoding.check(factory(resultEncoding => Encoding.check(resultEncoding))).write(bufferWriter, context, value);
+            getEncoding(factory(resultEncoding => geEncoding(resultEncoding))).write(bufferWriter, context, value);
         }
     };
 }

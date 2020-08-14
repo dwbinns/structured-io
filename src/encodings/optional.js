@@ -1,11 +1,10 @@
 const Encoding = require("../Encoding");
 
 class Optional extends Encoding {
-    constructor(defaultValue, contentEncoding) {
+    constructor(defaultValue, content) {
         super();
-        Encoding.check(contentEncoding);
         this.defaultValue = defaultValue;
-        this.contentEncoding = contentEncoding;
+        this.contentEncoding = getEncoding(content);
     }
 
     read(bufferReader, context, value) {

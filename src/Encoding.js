@@ -1,12 +1,17 @@
-module.exports = class Encoding {
-    static check(encoding) {
-        if (!(encoding instanceof Encoding)) {
-            throw new Error("Not an encoding");
-        }
-        return encoding;
+class NotAnEncoding extends Error {
+    constructor(message = "Not an Encoding") {
+        super(message);
+        this.captured = false;
     }
+}
 
-    read() { }
-    write() { }
-};
+class Encoding {
+    read(bufferReader, context, value) {}
+    write(bufferWriter, context, value) {}
 
+    static NotAnEncoding = NotAnEncoding;
+}
+
+
+
+module.exports = Encoding;

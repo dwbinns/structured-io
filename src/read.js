@@ -11,6 +11,7 @@ module.exports = function read(...args) {
         let reader = new BufferReader(uint8array);
         return encoding.read(reader, context);
     } catch (e) {
-        explain(uint8array, encoding);
+        e.explain = () => explain(uint8array, encoding);
+        throw e;
     }
 }
