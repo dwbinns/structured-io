@@ -1,12 +1,14 @@
 const Encoding = require("../Encoding");
-const annotate = require("./annotate");
+const annotate = require("../annotate");
+const Annotated = require("../annotate/Annotated");
 
-const u64bigint = annotate(v => `u64BE: ${v}`, new class extends Encoding {
-    read(bufferReader, context) {
+class U64bigint extends Annotated {
+    read(bufferReader) {
         return bufferReader.readU64big();
     }
-    write(bufferWriter, context, value) {
+    write(bufferWriter, value) {
         bufferWriter.writeU64big(value);
     }
-});
+}
 
+module.exports = () => new U64bigint();

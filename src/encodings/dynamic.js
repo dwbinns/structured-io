@@ -8,13 +8,13 @@ class Dynamic extends Encoding {
         this.encodingFactory = encodingFactory;
     }
 
-    read(bufferReader, context, value) {
-        getEncoding(this.encodingFactory(value, context)).read(bufferReader, context, value);
+    read(bufferReader, value) {
+        getEncoding(this.encodingFactory(value)).read(bufferReader, value);
         return value;
     }
 
-    write(bufferWriter, context, value) {
-        getEncoding(this.encodingFactory(value, context)).write(bufferWriter, context, value);
+    write(bufferWriter, value) {
+        getEncoding(this.encodingFactory(value)).write(bufferWriter, value);
     }
 }
 

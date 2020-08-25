@@ -1,16 +1,24 @@
 
+const annotate = require("../annotate");
+const Annotated = require("../annotate/Annotated");
 const Encoding = require("../Encoding");
 
+class Instance extends Annotated {
+    constructor(classType, encoding = classType.encoding) {
+        super(`instance: ${classType.name}`);
+        classType.prototype.constructor;
+        this.classType = classType;
+        this.encoding = Encoding.check(encoding);
+    }
+    read(bufferReader, value) {
+        return this.encoding.read(bufferReader, new this.classType());
+    }
+    write(bufferWriter, value) {
+        this.encoding.write(bufferWriter, value);
+    }
+    explain(value) {
+        return "";
+    }
+}
 
-module.exports = function instance(classType, encoding = classType.encoding) {
-    if (!(encoding instanceof Encoding)) throw new Encoding.NotAnEncoding();
-
-    return new class extends Encoding {
-        read(bufferReader, context, value) {
-            return encoding.read(bufferReader, context, new classType());
-        }
-        write(bufferWriter, context, value) {
-            encoding.write(bufferWriter, context, value);
-        }
-    };
-};
+module.exports = (...args) => new Instance(...args);

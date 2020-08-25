@@ -1,7 +1,7 @@
 Error.stackTraceLimit = Infinity;
 
 const { deepStrictEqual } = require('assert');
-const {u8, u16, u24, explain, read, write, definition, sequence, fields, fixed, size, type, dynamic, bytes, ignore} = require("..")
+const {call, u8, u16, u24, explain, read, write, definition, sequence, fields, fixed, size, type, dynamic, bytes, ignore} = require("..")
 
 class Body {
     constructor(content, variable = [], bytes = []) {
@@ -11,27 +11,28 @@ class Body {
         this.testSizeIncluded = Uint8Array.of(...variable.map(v => v + 200));
         this.testFixedBytes = Uint8Array.of(...bytes);
     }
-}
 
-Body.encoding = definition((sizeSeparate, sizeIncluded) => sequence(
-    sizeSeparate(u16()),
-    fields({
-        content: u24(),
-        testSizeSeparate: size(sizeSeparate, {}, bytes()),
-        testSizePrefix: size(u8(), {}, bytes()),
-    }),
-    size(sizeIncluded, {},
-        sequence(
-            sizeIncluded(u8()),
-            fields({
-                testSizeIncluded: bytes()
-            }),
-        )
-    ),
-    fields({
-        testFixedBytes: bytes(4)
-    }),
-));
+    static encoding = definition((sizeSeparate, sizeIncluded) => sequence(
+        sizeSeparate(u16()),
+        fields({
+            content: u24(),
+            testSizeSeparate: size(sizeSeparate, {}, bytes()),
+            testSizePrefix: size(u8(), {}, bytes()),
+        }),
+        size(sizeIncluded, {},
+            sequence(
+                sizeIncluded(u8()),
+                fields({
+                    testSizeIncluded: bytes()
+                }),
+                //call(() => {throw new Error()})
+            )
+        ),
+        fields({
+            testFixedBytes: bytes(4)
+        }),
+    ));
+}
 
 class Message {
     constructor(version, extra, body) {
@@ -46,7 +47,6 @@ Message.encoding = sequence(
     fixed(u8(), 1),
     dynamic(v => v.version >= 0 && fields({extra: u8()})),
     fields({
-        //body: ofClass(Body),
         body: type(u8(), {
             3: Body,
         })

@@ -1,18 +1,19 @@
-const Encoding = require("../Encoding");
-const annotate = require("../annotate");
+const Annotated = require("../annotate/Annotated");
 
-class Ignore extends Encoding {
+class Ignore extends Annotated {
     constructor(size) {
-        super();
+        super(`ignore: ${size}`);
         this.size = size;
     }
-    read(bufferReader, context, value) {
+    explain() {return "";}
+
+    read(bufferReader, value) {
         bufferReader.eat(this.size);
         return value;
     }
-    write(bufferWriter, context, value) {
+    write(bufferWriter, value) {
         bufferWriter.skip(this.size);
     }
 }
 
-module.exports = annotate((v, size) => `ignore: ${size}`, Ignore);
+module.exports = (...args) => new Ignore(...args);

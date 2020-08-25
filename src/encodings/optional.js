@@ -1,4 +1,5 @@
 const Encoding = require("../Encoding");
+const getEncoding = require("../getEncoding");
 
 class Optional extends Encoding {
     constructor(defaultValue, content) {
@@ -7,10 +8,10 @@ class Optional extends Encoding {
         this.contentEncoding = getEncoding(content);
     }
 
-    read(bufferReader, context, value) {
-        let subReader = bufferReader.subReader();
+    read(bufferReader, value) {
+        let subReader = bufferReader.here();
         try {
-            let result = this.contentEncoding.read(subReader, context, value);
+            let result = this.contentEncoding.read(subReader, value);
             bufferReader.eat(subReader.getReadSize());
             return result;
         } catch (e) {
@@ -18,9 +19,9 @@ class Optional extends Encoding {
         }
 
     }
-    write(bufferWriter, context, value) {
+    write(bufferWriter, value) {
         if (value === this.defaultValue) return;
-        this.contentEncoding.write(bufferWriter, context, value);
+        this.contentEncoding.write(bufferWriter, value);
     }
 }
 

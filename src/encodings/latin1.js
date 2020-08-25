@@ -1,3 +1,3 @@
 const string = require("./string");
 
-module.exports = (where, size) => string(where, "latin1", size);
+module.exports = (size) => string("latin1", size);

@@ -6,12 +6,12 @@ class Chain {
         this.components = Encoding.getAll(components);
     }
 
-    read(bufferReader, context, value) {
-        return this.components.reduce((result, encoding) => encoding.read(bufferReader, context, result), value);
+    read(bufferReader, value) {
+        return this.components.reduce((result, encoding) => encoding.read(bufferReader, result), value);
     }
-    write(bufferWriter, context, value) {
+    write(bufferWriter, value) {
         for (let encoding of this.components) {
-            encoding.write(bufferWriter, context, value);
+            encoding.write(bufferWriter, value);
         }
     }
 }

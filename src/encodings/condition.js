@@ -1,25 +1,26 @@
-const ScopeFactory = require("../definitions/ScopeFactory");
-const Encoding = require("../Encoding");
-const annotate = require("../annotate");
+const getEncoding = require("../getEncoding");
+const Definition = require("../definitions/Definition");
+const Annotated = require("../annotate/Annotated");
 
-class Condition {
+class Condition extends Annotated {
     constructor(condition, conditionalContent) {
-        this.contentEncoding = Encoding.get(conditionalContent);
-        this.condition = new ScopeFactory(condition);
+        this.contentEncoding = getEncoding(conditionalContent);
+        this.condition = condition;
     }
 
-    read(bufferReader, context, value) {
-        let sizeScope = this.condition.getReadScope(bufferReader, context);
-        return sizeScope.get() ? this.contentEncoding.read(bufferReader, context, value) : null;
+    read(bufferReader, value) {
+        let conditionDefinition = Definition.read(this.condition, bufferReader);
+        return conditionDefinition.get() ? this.contentEncoding.read(bufferReader, value) : null;
     }
-    write(bufferWriter, context, value) {
-        let sizeScope = this.condition.getWriteScope(bufferWriter, context);
-        sizeScope.set(value ? 1 : 0);
+    write(bufferWriter, value) {
+        let conditionDefinition = Definition.write(this.condition, bufferWriter);
+
+        conditionDefinition.set(value ? 1 : 0);
         if (value) {
-            this.contentEncoding.write(bufferWriter, context, value);
+            this.contentEncoding.write(bufferWriter, value);
         }
     }
-    
+
 }
 
-module.exports = annotate(v => `condition`, Condition);
+module.exports = (...args) => new Condition(...args);

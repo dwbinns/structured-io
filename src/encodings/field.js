@@ -1,15 +1,28 @@
+const Annotated = require("../annotate/Annotated");
+const Annotator = require("../annotate/Annotator");
 const Encoding = require("../Encoding");
-const annotate = require("./annotate");
+const getEncoding = require("../getEncoding");
 
-module.exports = function field(name, fieldDefinition) {
-    let fieldEncoding = getEncoding(fieldDefinition);
-    return annotate(`field: ${name}`, new class extends Encoding {
-        read(bufferReader, context, value) {
-            value[name] = fieldEncoding.read(bufferReader, context, value[name]);
-            return value;
-        }
-        write(bufferWriter, context, value) {
-            fieldEncoding.write(bufferWriter, context, value[name]);
-        }
-    });
-};
+class Field extends Annotated {
+    constructor(name, fieldDefinition) {
+        super(`.${name}`);
+        this.name = name;
+        this.fieldEncoding = getEncoding(fieldDefinition);
+    }
+
+
+    read(bufferReader, value) {
+        value[this.name] = this.fieldEncoding.read(bufferReader, value[this.name]);
+        return value;
+    }
+    write(bufferWriter, value) {
+        this.fieldEncoding.write(bufferWriter, value[this.name]);
+    }
+
+    explain(value) {
+        return "";
+    }
+
+}
+
+module.exports = (name, fieldDefinition) => new Field(name, fieldDefinition);

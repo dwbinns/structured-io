@@ -9,15 +9,15 @@ class Configure extends Encoding {
     }
 
 
-    read(bufferReader, context, value) {
-        let subReader = bufferReader.subReader().configure(this.configuration);
-        value = this.contentEncoding.read(subReader, context, value);
+    read(bufferReader, value) {
+        let subReader = bufferReader.here().configure(this.configuration);
+        value = this.contentEncoding.read(subReader, value);
         bufferReader.eat(subReader.getReadSize());
         return value;
     }
-    write(bufferWriter, context, value) {
-        let nestedWriter = bufferWriter.nestedWriter().configure(this.configuration);
-        this.contentEncoding.write(nestedWriter, context, value);
+    write(bufferWriter, value) {
+        let nestedWriter = bufferWriter.here().configure(this.configuration);
+        this.contentEncoding.write(nestedWriter, value);
         bufferWriter.skip(nestedWriter.getSize());
     }
 }

@@ -3,12 +3,11 @@ const Encoding = require("../Encoding");
 function arrayLength(contentSpecification) {
     let contentEncoding = interpretEncoding(contentSpecification);
     return new class extends Encoding {
-        read(bufferReader, context, value) {
-            value = new Array(contentEncoding.read(bufferReader, context)).fill(null);
-            return value;
+        read(bufferReader) {
+            return new Array(contentEncoding.read(bufferReader)).fill(null);
         }
-        write(bufferWriter, context, value) {
-            contentEncoding.write(bufferWriter, context, value.length);
+        write(bufferWriter, value) {
+            contentEncoding.write(bufferWriter, value.length);
         }
     };
 }

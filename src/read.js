@@ -3,13 +3,12 @@ const Encoding = require('./Encoding');
 const explain = require('./explain');
 const getEncoding = require('./getEncoding');
 
-module.exports = function read(...args) {
-    let [uint8array, context, specification] = args.length == 3 ? args : [args[0], null, args[1]];
-
+module.exports = function read(uint8array, specification, extra) {
+    if (extra) throw new Error("Argument mismatch");
     let encoding = getEncoding(specification);
     try {
         let reader = new BufferReader(uint8array);
-        return encoding.read(reader, context);
+        return encoding.read(reader);
     } catch (e) {
         e.explain = () => explain(uint8array, encoding);
         throw e;

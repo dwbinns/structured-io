@@ -3,15 +3,15 @@ const annotate = require("../annotate");
 
 class String extends Encoding {
     constructor(encoding = "utf8", size) {
-        super();
+        super(`string(${encoding})`);
         this.encoding = encoding;
         this.size = size;
     }
 
-    read(bufferReader, context, value) {
+    read(bufferReader, value) {
         return Buffer.from(bufferReader.readBytes(this.size)).toString(this.encoding);
     }
-    write(bufferWriter, context, value) {
+    write(bufferWriter, value) {
         //console.log("writebytes",value.length,size);
         // @ts-ignore
         let buffer = Buffer.from(value, this.encoding);
@@ -20,5 +20,5 @@ class String extends Encoding {
     }
 }
 
-module.exports = annotate((s, encoding, size) => `string(${encoding}): ${s}`, String);
+module.exports = (...args) => new String(...args);
 

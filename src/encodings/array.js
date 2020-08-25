@@ -1,39 +1,44 @@
 const ScopeFactory = require("../definitions/ScopeFactory");
 const Encoding = require("../Encoding");
 const annotate = require("../annotate");
+const getEncoding = require("../getEncoding");
+const Definition = require("../definitions/Definition");
+const Annotated = require("../annotate/Annotated");
 
-class ArrayIO {
-    constructor(a1, a2) {
-        let [size, content] = a2 ? [a1, a2] : [, a1];
+class ArrayEncoding extends Annotated {
+    constructor(size, content) {
+        super();
 
-        this.contentEncoding = Encoding.get(content);
-        this.size = size && new ScopeFactory(size);
+        this.contentEncoding = getEncoding(content);
+        this.size = size;
 
     }
 
-    read(bufferReader, context, value) {
+    read(bufferReader, value) {
         if (!this.size) {
             value = [];
             while (!bufferReader.eof()) {
-                value.push(this.contentEncoding.read(bufferReader, context));
+                value.push(this.contentEncoding.read(bufferReader));
             }
         } else {
-            let sizeScope = this.size.getReadScope(bufferReader, context);
-            value = new Array(sizeScope.get()).fill(0);
-            value.forEach((v, i) => value[i] = this.contentEncoding.read(bufferReader, context, v));
+            let size = Definition.read(this.size, bufferReader);
+            value = new Array(size.get()).fill(0);
+            value.forEach((v, i) => value[i] = this.contentEncoding.read(bufferReader, v));
         }
         return value;
     }
-    write(bufferWriter, context, value) {
+    write(bufferWriter, value) {
         if (this.size) {
-            let sizeScope = this.size.getWriteScope(bufferWriter, context);
-            sizeScope.set(value.length);
+            let size = Definition.write(this.size, bufferWriter);
+            size.set(value.length);
         }
         for (let item of value) {
-            this.contentEncoding.write(bufferWriter, context, item);
+            this.contentEncoding.write(bufferWriter, item);
         }
     }
 
 }
 
-module.exports = annotate(v => `array`, ArrayIO);
+module.exports = (a1, a2) => a2
+    ? new ArrayEncoding(a1, a2)
+    : new ArrayEncoding(null, a1);

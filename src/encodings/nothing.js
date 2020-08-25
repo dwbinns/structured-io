@@ -1,8 +1,8 @@
 const Encoding = require("../Encoding");
 
 module.exports = new class extends Encoding {
-    read(bufferReader, context) {
+    read(bufferReader) {
     }
-    write(bufferWriter, context, value) {
+    write(bufferWriter, value) {
     }
 };

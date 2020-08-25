@@ -8,7 +8,7 @@ class BitSet extends Encoding {
     constructor(components, dataEncoding) {
         super();
         this.components = Object.entries(components).map(([name, index]) => [name, 1 << index]);
-        console.log("BITSET", Object.values(components));
+        //console.log("BITSET", Object.values(components));
         let bitSize = Math.max(...Object.values(components)) + 1;
         this.dataEncoding = dataEncoding || (
             bitSize <= 8 ? u8()
@@ -18,13 +18,13 @@ class BitSet extends Encoding {
         );
     }
 
-    read(bufferReader, context, value) {
+    read(bufferReader, value) {
         let data = this.dataEncoding.read(bufferReader, context);
         // @ts-ignore
         return Object.fromEntries(this.components.map(([key, mask]) => [key, (data & mask) > 0]));
     }
 
-    write(bufferWriter, context, value) {
+    write(bufferWriter, value) {
         this.dataEncoding.write(
             bufferWriter,
             context,
@@ -32,9 +32,9 @@ class BitSet extends Encoding {
                 // @ts-ignore
                 (accumulator, [name, mask]) => accumulator + (value[name] ? mask : 0),
                 0
-            ), 
+            ),
         );
     }
 }
 
-module.exports = annotate(v => `bitset`, BitSet);
+module.exports = (...args) => new BitSet(...args);

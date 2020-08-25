@@ -1,13 +1,17 @@
 const Encoding = require("../Encoding");
 
-module.exports = function call(handler) {
-    return new class extends Encoding {
-        read(bufferReader, context, value) {
-            handler(value, context);
-            return value;
-        }
-        write(bufferWriter, context, value) {
-            handler(value, context);
-        }
-    };
+class Call extends Encoding {
+    constructor(handler) {
+        super()
+        this.handler = handler;
+    }
+    read(bufferReader, value) {
+        this.handler(value, bufferReader.context);
+        return value;
+    }
+    write(bufferWriter, value) {
+        this.handler(value, bufferWriter.context);
+    }
 }
+
+module.exports = (...args) => new Call(...args);

@@ -13,22 +13,22 @@
 //     function regionContent(contentEncoding) {
 //         Encoding.check(contentEncoding);
 //         return /*annotate(v=>`region:${name}`, */(new class extends Encoding {
-//             read(bufferReader, context, value) {
+//             read(bufferReader, value) {
 
-//                 let regionReader = bufferReader.subReader();
+//                 let regionReader = bufferReader.here();
 //                 bufferRW = regionReader;
 //                 callbacks.start.forEach(callback => callback(regionReader));
-//                 value = contentEncoding.read(regionReader, context, value);
+//                 value = contentEncoding.read(regionReader, value);
 //                 callbacks.end.forEach(callback => callback(regionReader));
 //                 bufferReader.eat(regionReader.getReadSize());
 //                 return value;
 //             }
-//             write(bufferWriter, context, value) {
+//             write(bufferWriter, value) {
 
 //                 let regionWriter = bufferWriter.subWriter();
 //                 bufferRW = regionWriter;
 //                 callbacks.start.forEach(callback => callback(regionWriter));
-//                 contentEncoding.write(regionWriter, context, value);
+//                 contentEncoding.write(regionWriter, value);
 //                 callbacks.end.forEach(callback => callback(regionWriter));
 //                 bufferWriter.skip(regionWriter.getSize());
 //             }
@@ -48,13 +48,13 @@
 
 // module.exports = function scope(name, factory = [name, name = null][0]) {
 //     return annotate(v => `scope: ${name}`, new class ScopeEncoding extends Encoding {
-//         read(bufferReader, context, value) {
+//         read(bufferReader, value) {
 //             let regions = new Array(factory.length).fill().map(() => region(name));
-//             return Encoding.check(factory(...regions)).read(bufferReader, context, value);
+//             return Encoding.check(factory(...regions)).read(bufferReader, value);
 //         }
-//         write(bufferWriter, context, value) {
+//         write(bufferWriter, value) {
 //             let regions = new Array(factory.length).fill().map(() => region(name));
-//             Encoding.check(factory(...regions)).write(bufferWriter, context, value);
+//             Encoding.check(factory(...regions)).write(bufferWriter, value);
 //         }
 //     });
 // }

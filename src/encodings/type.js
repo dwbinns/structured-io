@@ -2,22 +2,24 @@ const ScopeFactory = require("../definitions/ScopeFactory");
 const Encoding = require("../Encoding");
 const annotate = require("../annotate");
 const getEncoding = require("../getEncoding");
+const Definition = require("../definitions/Definition");
+const Annotated = require("../annotate/Annotated");
 
-class Type extends Encoding {
+class Type extends Annotated {
     constructor(type, options, defaultClass, defaultField = "code") {
-        super();
+        super("type");
         if (defaultClass && typeof defaultClass != "function") throw new Error("DefaultClass is not a function");
         this.defaultField = defaultField;
         this.defaultClass = defaultClass;
-        this.type = new ScopeFactory(type);
+        this.type = type;
         Object.values(options).forEach(getEncoding);
         this.codeLookup = new Map(Object.entries(options).map(([code, type])=>[type, Number(code)]));
         this.typeLookup = new Map(Object.entries(options).map(([code, type])=>[Number(code), type]));
     }
 
-    read(bufferReader, context, value) {
-        let typeScope = this.type.getReadScope(bufferReader, context);
-        let code = typeScope.get();
+    read(bufferReader, value) {
+        let typeDefinition = Definition.read(this.type, bufferReader);
+        let code = typeDefinition.get();
         let type = this.typeLookup.get(code);
         let instance;
         if (!type) {
@@ -26,10 +28,11 @@ class Type extends Encoding {
         } else {
             instance = new type();
         }
-        return instance.constructor.encoding.read(bufferReader, context, instance);
+        return instance.constructor.encoding.read(bufferReader, instance);
     }
-    write(bufferWriter, context, value) {
-        let typeScope = this.type.getWriteScope(bufferWriter, context);
+
+    write(bufferWriter, value) {
+        let typeDefinition = Definition.write(this.type, bufferWriter);
 
         let code;
         if (this.defaultClass && value instanceof this.defaultClass) {
@@ -38,10 +41,10 @@ class Type extends Encoding {
             if (!this.codeLookup.has(value.constructor)) throw new Error(`Unknown type ${value.constructor}`);
             code = this.codeLookup.get(value.constructor);
         }
-        typeScope.set(code);
-        value.constructor.encoding.write(bufferWriter, context, value);
+        typeDefinition.set(code);
+        value.constructor.encoding.write(bufferWriter, value);
     }
 }
 
-module.exports = annotate(v => `type: ${v ? v.constructor.name : "-"}`, Type);
+module.exports = (...args) => new Type(...args);
 

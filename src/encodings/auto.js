@@ -1,15 +1,16 @@
 const Encoding = require("../Encoding");
 const annotate = require("../annotate");
+const Annotated = require("../annotate/Annotated");
 
 
-class Auto extends Encoding {
-    read(bufferReader, context, value) {
-        value.constructor.encoding.read(bufferReader, context, value);
+class Auto extends Annotated {
+    read(bufferReader, value) {
+        value.constructor.encoding.read(bufferReader, value);
         return value;
     }
-    write(bufferWriter, context, value) {
-        value.constructor.encoding.write(bufferWriter, context, value);
+    write(bufferWriter, value) {
+        value.constructor.encoding.write(bufferWriter, value);
     }
 }
 
-module.exports = annotate(v => `auto: ${v.constructor.name}`, Auto);
+module.exports = () => new Auto();

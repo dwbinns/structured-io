@@ -1,13 +1,12 @@
-const Encoding = require("../Encoding");
-const annotate = require("../annotate");
+const AnnotatedValue = require("../annotate/AnnotatedValue");
 
-class U32 extends Encoding {
-    read(bufferReader, context) {
+class U32 extends AnnotatedValue {
+    read(bufferReader) {
         return bufferReader.readU32();
     }
-    write(bufferWriter, context, value) {
+    write(bufferWriter, value) {
         bufferWriter.writeU32(value);
     }
 }
 
-module.exports = annotate(v => `u32: ${v}`, U32);
+module.exports = (...args) => new U32(...args);

@@ -3,11 +3,11 @@ const Encoding = require("../Encoding");
 module.exports = function transform(innerEncoding, read, write) {
 
     return new class extends Encoding {
-        read(bufferReader, context, value) {
-            return read(innerEncoding.read(bufferReader, context));
+        read(bufferReader) {
+            return read(innerEncoding.read(bufferReader));
         }
-        write(bufferWriter, context, value) {
-            innerEncoding.write(bufferWriter, context, write(value));
+        write(bufferWriter, value) {
+            innerEncoding.write(bufferWriter, write(value));
         }
     };
 };
