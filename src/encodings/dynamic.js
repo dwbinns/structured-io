@@ -1,5 +1,4 @@
 const Encoding = require("../Encoding");
-const annotate = require("../annotate");
 const getEncoding = require("../getEncoding");
 
 class Dynamic extends Encoding {

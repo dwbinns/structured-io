@@ -1,7 +1,4 @@
-const Encoding = require("../Encoding");
-const annotate = require("../annotate");
 const Annotated = require("../annotate/Annotated");
-
 
 class Auto extends Annotated {
     read(bufferReader, value) {

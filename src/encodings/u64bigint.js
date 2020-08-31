@@ -1,5 +1,3 @@
-const Encoding = require("../Encoding");
-const annotate = require("../annotate");
 const Annotated = require("../annotate/Annotated");
 
 class U64bigint extends Annotated {

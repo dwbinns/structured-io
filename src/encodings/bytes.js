@@ -1,6 +1,4 @@
-const annotate = require("../annotate");
 const Annotated = require("../annotate/Annotated");
-const Encoding = require("../Encoding");
 
 class Bytes extends Annotated {
     constructor(size) {

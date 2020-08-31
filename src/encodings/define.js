@@ -1,8 +1,4 @@
-const annotate = require ("../annotate");
 const Encoding = require("../Encoding");
-const Scope = require("../definitions/Scope");
-const getEncoding = require("../getEncoding");
-const instance = require("./instance");
 const Definition = require("../definitions/Definition");
 const { getLocation } = require("../capture");
 

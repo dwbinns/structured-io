@@ -1,7 +1,8 @@
 const Tree = require("../Tree");
 const tty = require("tty");
 
-const useColour = tty.isatty();
+const useColour = process.stdout.isTTY;
+
 const red = useColour ? '\x1b[31m' : '';
 const green = useColour ? '\x1b[32m' : '';
 const yellow = useColour ? '\x1b[33m' : '';
@@ -10,6 +11,7 @@ const magenta = useColour ? '\x1b[35m' : '';
 const cyan = useColour ? '\x1b[36m' : '';
 const normal = useColour ? '\x1b(B\x1b[m' : '';
 
+let serial = 0;
 
 class AnnotationNode {
     constructor(parent, bufferReader, text, location) {
@@ -19,6 +21,7 @@ class AnnotationNode {
         this.children = [];
         this.text = text;
         this.location = location;
+        this.serial = serial++;
     }
 
 
@@ -26,7 +29,7 @@ class AnnotationNode {
         return yellow
             + [...this.bufferReader.uint8array.subarray(from, to)]
                 .map(v => v.toString(16).padStart(2, '0'))
-                .join(" ")
+                .join(":")
             + normal;
     }
 
@@ -35,21 +38,23 @@ class AnnotationNode {
     }
 
     toTree() {
-        if (!this.children.length) {
-            return new Tree(this.text + ": [" + this.format(this.start, this.end)+"] " + this.formatLocation());
-        }
-
         let children = [];
         let position = this.start;
+        let firstChildStart = position;
         for (let child of this.children) {
-            if (position < child.start) children.push(new Tree(this.format(position, child.start)));
+            const inline = child.bufferReader.uint8array == this.bufferReader.uint8array;
+            if (inline && position < child.start) {
+                if (position == this.start) firstChildStart = child.start;
+                else children.push(new Tree(this.format(position, child.start)));
+            }
             children.push(child.toTree());
-            position = child.end;
+            if (inline) position = child.end;
         }
-
+        if (position == this.start) position = firstChildStart = this.end;
         if (position < this.end) children.push(new Tree(this.format(position, this.end)));
 
-        return new Tree(`${this.text} ${this.formatLocation()}`, children);
+        return new Tree(`${this.text} <${this.format(this.start, firstChildStart)}> ${this.formatLocation()}`, children);
+        //return new Tree(`${this.text} ${this.formatLocation()}`, children);
     }
 
 
@@ -59,11 +64,17 @@ class AnnotationNode {
     }
 }
 
+
+
 module.exports = class AnnotateContext {
     static symbol = Symbol("AnnotationContext");
 
-    constructor(bufferReader, text, location) {
-        this.root = this.node = new AnnotationNode(null, bufferReader, text, location)
+    getCurrentNode() {
+        return this.node;
+    }
+
+    restore(currentNode) {
+        this.node = currentNode;
     }
 
     toTree() {
@@ -72,12 +83,15 @@ module.exports = class AnnotateContext {
 
     child(bufferReader, text, location) {
         let child = new AnnotationNode(this.node, bufferReader, text, location);
-        this.node.children.push(child);
+        if (!this.node) this.root = child;
+        //else this.node.children.push(child);
         this.node = child;
+        return child;
     }
 
-    finish(text) {
-        this.node.finish(text);
-        this.node = this.node.parent;
+    finish(text, child) {
+        if (child.parent) child.parent.children.push(child);
+        child.finish(text);
+        this.node = child.parent;
     }
 }

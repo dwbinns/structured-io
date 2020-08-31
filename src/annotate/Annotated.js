@@ -2,6 +2,7 @@ const Encoding = require("../Encoding");
 const { getLocation } = require("../capture");
 const AnnotateContext = require("./AnnotateContext");
 
+
 class Annotated extends Encoding {
     constructor(name) {
         super();
@@ -9,21 +10,26 @@ class Annotated extends Encoding {
         this.location = getLocation();
         let read = this.read;
         this.read = (bufferReader, value) => {
+            let context = bufferReader.getContext(AnnotateContext.symbol);
+            if (!context) return read.call(this, bufferReader, value);
+
+            let node = context.getCurrentNode();
+            let annotationNode = context.child(bufferReader, this.annotation, this.location);
             try {
-                let context = bufferReader.getContext(AnnotateContext.symbol);
-                if (context) {
-                    context.child(bufferReader, this.annotation, this.location);
-                    let result = read.call(this, bufferReader, value);
-                    context.finish(`${this.annotation} ${this.explain(result)}`);
-                    return result;
-                }
-                return read.call(this, bufferReader, value);
+
+                let result = read.call(this, bufferReader, value);
+                if (this.decode) this.decode(result, context);
+                context.finish(`${this.annotation} ${this.explain(result)}`, annotationNode);
+                return result;
             } catch (e) {
+                //annotationNode.cancel();
                 e.stack += `\nIn: ${this.annotation} @ ${this.location}`;
                 throw e;
+            } finally {
+                if (context) context.restore(node);
             }
         };
-        //Object.defineProperty(this.read, "name", {value: `read<${this.name}>\nfrom: ${this.location}>`});
+        Object.defineProperty(this.read, "name", {value: `read<${name}>`});
 
         let write = this.write;
         this.write = (bufferWriter, value) => {
@@ -35,11 +41,18 @@ class Annotated extends Encoding {
             }
         }
 
-        //Object.defineProperty(this.write, "name", {value: `write<${this.name}>\nfrom: ${this.location}`});
+        Object.defineProperty(this.write, "name", {value: `write<${name}>`});
     }
 
     explain(value) {
         return value ? value.constructor.name : "";
+    }
+
+
+    unannotate() {
+        delete this.write;
+        delete this.read;
+        return this;
     }
 }
 

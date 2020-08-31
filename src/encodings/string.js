@@ -1,5 +1,4 @@
 const Encoding = require("../Encoding");
-const annotate = require("../annotate");
 
 class String extends Encoding {
     constructor(encoding = "utf8", size) {

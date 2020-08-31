@@ -4,16 +4,19 @@ const { getLocation } = require('./capture');
 const getEncoding = require('./getEncoding');
 
 
-module.exports = function explain(uint8array, specification) {
+module.exports = function explain(uint8array, specification, parentContext) {
     let reader = new BufferReader(uint8array);
-    let context = new AnnotateContext(reader, 'explain', getLocation());
+    let context = parentContext || new AnnotateContext();
+    let node = context.child(reader, "explain", getLocation());
     reader.setContext(AnnotateContext.symbol, context);
 
     let encoding = getEncoding(specification);
     try {
-        encoding.read(reader, context);
+        encoding.read(reader);
+    } catch(e) {
+        console.log(e);
     } finally {
-        context.finish();
-        console.log(context.toTree().renderLines().join("\n"));
+        context.finish('explain', node);
+        if (!parentContext) console.log(context.toTree().renderLines().join("\n"));
     }
 }

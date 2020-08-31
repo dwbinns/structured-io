@@ -32,6 +32,7 @@ module.exports = {
     instance: wrap(require('./encodings/instance')),
     latin1: wrap(require('./encodings/latin1')),
     littleEndian: wrap(require('./encodings/littleEndian')),
+    noAnnotation: wrap(require('./encodings/noAnnotation')),
     nothing: wrap(require('./encodings/nothing')),
     optional: wrap(require('./encodings/optional')),
     pad: wrap(require('./encodings/pad')),

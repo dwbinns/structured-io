@@ -1,6 +1,4 @@
-const annotate = require("../annotate");
 const Annotated = require("../annotate/Annotated");
-const Encoding = require("../Encoding");
 const getEncoding = require("../getEncoding");
 
 class Fixed extends Annotated {

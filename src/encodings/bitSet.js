@@ -1,5 +1,4 @@
 const Encoding = require("../Encoding");
-const annotate = require("../annotate");
 const u8 = require("./u8").internal;
 const u16 = require("./u16").internal;
 const u32 = require("./u32").internal;

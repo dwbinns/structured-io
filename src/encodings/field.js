@@ -1,6 +1,4 @@
 const Annotated = require("../annotate/Annotated");
-const Annotator = require("../annotate/Annotator");
-const Encoding = require("../Encoding");
 const getEncoding = require("../getEncoding");
 
 class Field extends Annotated {

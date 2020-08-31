@@ -1,6 +1,5 @@
 
 const Encoding = require("../Encoding");
-const annotate = require("../annotate");
 const getEncoding = require("../getEncoding");
 const {ceil} = Math;
 

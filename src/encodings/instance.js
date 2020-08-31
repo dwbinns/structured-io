@@ -1,7 +1,9 @@
-
-const annotate = require("../annotate");
 const Annotated = require("../annotate/Annotated");
 const Encoding = require("../Encoding");
+const {BufferReader} = require("buffer-io");
+const AnnotateContext = require("../annotate/AnnotateContext");
+const { getLocation } = require("../capture");
+
 
 class Instance extends Annotated {
     constructor(classType, encoding = classType.encoding) {
@@ -17,7 +19,24 @@ class Instance extends Annotated {
         this.encoding.write(bufferWriter, value);
     }
     explain(value) {
-        return "";
+        return value.explain ? value.explain() : "";
+    }
+    decode(value, context) {
+        if (value.decodeContent) {
+            let parentNode = context.getCurrentNode();
+            try {
+                let [data, encoding] = value.decodeContent();
+                let reader = new BufferReader(data);
+                reader.setContext(AnnotateContext.symbol, context);
+                let node = context.child(reader, "decode", getLocation());
+                Encoding.check(encoding).read(reader, context);
+                context.finish("decode", node);
+                context.restore(parentNode);
+            } catch(e) {
+                return;
+            }
+
+        }
     }
 }
 

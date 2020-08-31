@@ -1,6 +1,3 @@
-const ScopeFactory = require("../definitions/ScopeFactory");
-const Encoding = require("../Encoding");
-const annotate = require("../annotate");
 const getEncoding = require("../getEncoding");
 const Definition = require("../definitions/Definition");
 const Annotated = require("../annotate/Annotated");
