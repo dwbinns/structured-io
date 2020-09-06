@@ -1,5 +1,3 @@
-const { getLocation } = require("./capture");
-
 class NotAnEncoding extends Error {
     constructor(message = "Not an Encoding") {
         super(message);

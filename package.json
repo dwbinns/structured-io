@@ -13,11 +13,12 @@
   "author": "David Binns <dwbinnspublic+git@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "c8": "^7.3.0",
     "tap": "^10.7.1"
   },
   "repository": "github:dwbinns/structured-io",
   "dependencies": {
-    "buffer-io": "^2.0.0",
-    "auto-creating-map": "1.0.0"
+    "auto-creating-map": "1.0.0",
+    "buffer-io": "^2.0.0"
   }
 }

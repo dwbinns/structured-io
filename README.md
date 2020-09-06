@@ -16,13 +16,13 @@ class Message {
     }
 
     static encoding = fields({
-        version:u8(),
+        version: u8(),
     });
 }
 
 let message = new Message(1);
 let data = write(message);
 let received = read(data, Message);
-console.log(message, received, "hi");
+console.log(message, received);
 JSON.stringify(message) == JSON.stringify(received);
 ```

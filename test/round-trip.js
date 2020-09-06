@@ -1,7 +1,7 @@
 Error.stackTraceLimit = Infinity;
 
 const { deepStrictEqual } = require('assert');
-const {call, u8, u16, u24, explain, read, write, definition, sequence, fields, fixed, size, type, dynamic, bytes, ignore} = require("..")
+const { u8, u16, u24, explain, read, write, definition, sequence, fields, fixed, size, type, dynamic, bytes, ignore } = require("..")
 
 class Body {
     constructor(content, variable = [], bytes = []) {
@@ -43,9 +43,9 @@ class Message {
 }
 
 Message.encoding = sequence(
-    fields({version: u8()}),
+    fields({ version: u8() }),
     fixed(u8(), 1),
-    dynamic(v => v.version >= 0 && fields({extra: u8()})),
+    dynamic(v => v.version >= 0 && fields({ extra: u8() })),
     fields({
         body: type(u8(), {
             3: Body,
@@ -63,5 +63,5 @@ console.log(explain(data, Message));
 let readMessage = read(data, Message);
 // @ts-ignore
 deepStrictEqual(readMessage, writeMessage);
-console.log("Round trip succeeded");
+
 

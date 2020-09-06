@@ -1,5 +1,6 @@
 const { existsSync } = require("fs");
 const { basename, dirname, join } = require("path");
+const call = require("./encodings/call");
 
 function capture(fn, args) {
     return fn(...args);
@@ -22,8 +23,9 @@ function getLocation() {
     Error.prepareStackTrace = prior;
     let location = "-";
     if (callerStack) {
-        let fileName = getPackageRelative(callerStack.getFileName());
-        location = `${fileName}:${callerStack.getLineNumber()}:${callerStack.getColumnNumber()}`;
+        let fileName = callerStack.getFileName();
+        let where = fileName ? getPackageRelative(fileName) : callerStack.getEvalOrigin();
+        location = `${where}:${callerStack.getLineNumber()}:${callerStack.getColumnNumber()}`;
     }
 
     return location;

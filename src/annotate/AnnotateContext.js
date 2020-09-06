@@ -9,7 +9,7 @@ const yellow = useColour ? '\x1b[33m' : '';
 const blue = useColour ? '\x1b[34m' : '';
 const magenta = useColour ? '\x1b[35m' : '';
 const cyan = useColour ? '\x1b[36m' : '';
-const normal = useColour ? '\x1b(B\x1b[m' : '';
+const normal = useColour ? '\x1b[m' : '';
 
 let serial = 0;
 
