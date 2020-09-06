@@ -7,14 +7,14 @@
     "test": "test"
   },
   "scripts": {
-    "test": "tap -Rspec test/*.js"
+    "test": "node test",
+    "coverage": "c8 -r html -r text --src src --all node test"
   },
   "keywords": [],
   "author": "David Binns <dwbinnspublic+git@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "c8": "^7.3.0",
-    "tap": "^10.7.1"
+    "c8": "^7.3.0"
   },
   "repository": "github:dwbinns/structured-io",
   "dependencies": {
