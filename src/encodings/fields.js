@@ -1,7 +1,7 @@
-const field = require("./field");
-const sequence = require("./sequence");
+import field from "./field.js";
+import sequence from "./sequence.js";
 
-module.exports = (definitions) => sequence(
+export default (definitions) => sequence(
     ...Object.entries(definitions)
         .map(([key, value]) => field(key, value))
 );

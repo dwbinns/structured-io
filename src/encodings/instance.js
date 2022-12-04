@@ -1,9 +1,8 @@
-const Annotated = require("../annotate/Annotated");
-const Encoding = require("../Encoding");
-const {BufferReader} = require("buffer-io");
-const AnnotateContext = require("../annotate/AnnotateContext");
-const { getLocation } = require("../capture");
-
+import Annotated from "../annotate/Annotated.js";
+import Encoding from "../Encoding.js";
+import { BufferReader } from "buffer-io";
+import AnnotateContext from "../annotate/AnnotateContext.js";
+import { getLocation, wrap } from '../capture.js';
 
 class Instance extends Annotated {
     constructor(classType, encoding = classType.encoding) {
@@ -32,7 +31,7 @@ class Instance extends Annotated {
                 Encoding.check(encoding).read(reader, context);
                 context.finish("decode", node);
                 context.restore(parentNode);
-            } catch(e) {
+            } catch (e) {
                 return;
             }
 
@@ -40,4 +39,4 @@ class Instance extends Annotated {
     }
 }
 
-module.exports = (...args) => new Instance(...args);
+export default wrap((...args) => new Instance(...args));

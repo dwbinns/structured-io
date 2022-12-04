@@ -1,4 +1,4 @@
-const Encoding = require("../Encoding");
+import Encoding from "../Encoding.js";
 
 function arrayLength(contentSpecification) {
     let contentEncoding = interpretEncoding(contentSpecification);
@@ -11,4 +11,4 @@ function arrayLength(contentSpecification) {
         }
     };
 }
-exports.arrayLength = arrayLength;
+export default arrayLength;

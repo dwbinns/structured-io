@@ -1,5 +1,5 @@
-const Encoding = require("../Encoding");
-const getEncoding = require("../getEncoding");
+import Encoding from "../Encoding.js";
+import getEncoding from "../getEncoding.js";
 
 class Sequence extends Encoding {
     constructor(components) {
@@ -20,4 +20,4 @@ class Sequence extends Encoding {
     }
 }
 
-module.exports = (...components) => new Sequence(components);
+export default (...components) => new Sequence(components);

@@ -1,10 +1,9 @@
-const { BufferWriter } = require('buffer-io');
-const auto = require('./encodings/auto');
-const getEncoding = require('./getEncoding');
-const {wrap} = require('./capture');
+import { BufferWriter } from 'buffer-io';
+import auto from './encodings/auto.js';
+import getEncoding from './getEncoding.js';
 
-module.exports = wrap(function write(data, encoding = auto()) {
+export default function write(data, encoding = auto()) {
     let writer = new BufferWriter();
     getEncoding(encoding).write(writer, data);
     return writer.getUint8Array();
-});
+};

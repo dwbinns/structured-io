@@ -1,6 +1,6 @@
-const getEncoding = require("../getEncoding");
-const Definition = require("../definitions/Definition");
-const Annotated = require("../annotate/Annotated");
+import getEncoding from "../getEncoding.js";
+import Definition from "../definitions/Definition.js";
+import Annotated from "../annotate/Annotated.js";
 
 class Condition extends Annotated {
     constructor(condition, conditionalContent) {
@@ -23,4 +23,4 @@ class Condition extends Annotated {
 
 }
 
-module.exports = (...args) => new Condition(...args);
+export default (...args) => new Condition(...args);

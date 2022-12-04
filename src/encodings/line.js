@@ -1,14 +1,14 @@
 import AnnotatedValue from "../annotate/AnnotatedValue.js";
 import { wrap } from "../capture.js";
 
-class String extends AnnotatedValue {
-    constructor(encoding = "utf8", size) {
+class Line extends AnnotatedValue {
+    constructor(encoding = "utf8", terminal) {
         super(`string(${encoding})`);
         this.encoding = encoding;
-        this.size = size;
+        this.terminal = terminal;
     }
 
-    read(bufferReader, value) {
+    read(bufferReader) {
         return Buffer.from(bufferReader.readBytes(this.size)).toString(this.encoding);
     }
     write(bufferWriter, value) {
@@ -21,5 +21,5 @@ class String extends AnnotatedValue {
     }
 }
 
-export default wrap((...args) => new String(...args));
+export default wrap((...args) => new Line(...args));
 

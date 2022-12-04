@@ -708,7 +708,7 @@
 // }
 
 
-// module.exports = {
+// export default {
 //     u8, u16, u24, u32, u64big, auto, type, typed, length, alternative,
 //     fixed, bytes, ascii, string, ignore, size, sized, scope, array,
 //     lazy, Encoding, interpretEncoding, AnnotateContext, pad,

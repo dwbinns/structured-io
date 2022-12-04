@@ -1,5 +1,5 @@
-const Encoding = require("../Encoding");
-const getEncoding = require("../getEncoding");
+import Encoding from "../Encoding.js";
+import getEncoding from "../getEncoding.js";
 
 class Optional extends Encoding {
     constructor(defaultValue, content) {
@@ -25,4 +25,4 @@ class Optional extends Encoding {
     }
 }
 
-module.exports = (defaultValue, contentEncoding) => new Optional(defaultValue, contentEncoding);
+export default (defaultValue, contentEncoding) => new Optional(defaultValue, contentEncoding);

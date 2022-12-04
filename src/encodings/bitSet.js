@@ -1,7 +1,7 @@
-const Encoding = require("../Encoding");
-const u8 = require("./u8").internal;
-const u16 = require("./u16").internal;
-const u32 = require("./u32").internal;
+import Encoding from "../Encoding.js";
+import u8 from "./u8.js";
+import u16 from "./u16.js";
+import u32 from "./u32.js";
 
 class BitSet extends Encoding {
     constructor(components, dataEncoding) {
@@ -36,4 +36,4 @@ class BitSet extends Encoding {
     }
 }
 
-module.exports = (...args) => new BitSet(...args);
+export default (...args) => new BitSet(...args);

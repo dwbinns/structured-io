@@ -1,8 +1,7 @@
 
-const { getLocation } = require("../capture");
-const Encoding = require("../Encoding");
-const instance = require("../encodings/instance");
-const getEncoding = require("../getEncoding");
+import { getLocation } from '../capture.js';
+import Encoding from "../Encoding.js";
+import getEncoding from "../getEncoding.js";
 
 class Attach extends Encoding {
     constructor(definition, contentEncoding) {
@@ -99,4 +98,4 @@ class Definition {
 
 }
 
-module.exports = Definition;
+export default Definition;

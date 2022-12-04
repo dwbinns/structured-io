@@ -1,4 +1,5 @@
-const Annotated = require("../annotate/Annotated");
+import Annotated from "../annotate/Annotated.js";
+import { wrap } from "../capture.js";
 
 class Auto extends Annotated {
     read(bufferReader, value) {
@@ -10,4 +11,4 @@ class Auto extends Annotated {
     }
 }
 
-module.exports = () => new Auto();
+export default wrap(() => new Auto());

@@ -1,3 +1,3 @@
-const endian = require("./endian");
+import endian from "./endian.js";
 
-module.exports = contentEncoding => endian(true, contentEncoding);
+export default contentEncoding => endian(true, contentEncoding);

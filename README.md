@@ -8,7 +8,7 @@ npm install structured-io
 ```
 
 ```JavaScript
-const {u8, fields, read, write} = require('structured-io');
+import {u8, fields, read, write} from 'structured-io';
 
 class Message {
     constructor(version) {

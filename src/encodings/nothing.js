@@ -1,6 +1,6 @@
-const Encoding = require("../Encoding");
+import Encoding from "../Encoding.js";
 
-module.exports = new class extends Encoding {
+export default new class extends Encoding {
     read(bufferReader) {
     }
     write(bufferWriter, value) {

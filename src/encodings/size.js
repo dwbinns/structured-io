@@ -1,5 +1,5 @@
-const Definition = require("../definitions/Definition");
-const Encoding = require("../Encoding");
+import Definition from "../definitions/Definition.js";
+import Encoding from "../Encoding.js";
 const {max, ceil} = Math;
 
 class Size extends Encoding {
@@ -47,4 +47,4 @@ class Size extends Encoding {
 
 }
 
-module.exports = (...args) => new Size(...args);
+export default (...args) => new Size(...args);

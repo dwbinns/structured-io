@@ -1,37 +1,54 @@
 Error.stackTraceLimit = Infinity;
 
-const { deepStrictEqual } = require('assert');
-const { u8, u16, u24, explain, read, write, definition, sequence, fields, fixed, size, type, dynamic, bytes, ignore } = require("..")
+import { deepStrictEqual } from 'assert';
+import { array, auto, ascii, utf8, u8, u16, u24, explain, read, write, definition, sequence, fields, fixed, size, type, dynamic, bytes, ignore } from "structured-io";
 
-class Body {
-    constructor(content, variable = [], bytes = []) {
-        this.content = content;
-        this.testSizeSeparate = Uint8Array.of(...variable);
-        this.testSizePrefix = Uint8Array.of(...variable.map(v => v + 100));
-        this.testSizeIncluded = Uint8Array.of(...variable.map(v => v + 200));
-        this.testFixedBytes = Uint8Array.of(...bytes);
+class SizeSeparate {
+    constructor(text) {
+        this.text = text;
     }
 
-    static encoding = definition((sizeSeparate, sizeIncluded) => sequence(
-        sizeSeparate(u16()),
-        fields({
-            content: u24(),
-            testSizeSeparate: size(sizeSeparate, {}, bytes()),
-            testSizePrefix: size(u8(), {}, bytes()),
-        }),
+    static encoding = definition((sizeSeparate) =>
+        sequence(
+            sizeSeparate(u8()),
+            fixed(u8(), 1),
+            fields({ text: size(sizeSeparate, {}, utf8()) })
+        )
+    )
+}
+
+class SizePrefix {
+    constructor(data) {
+        this.data = data;
+    }
+
+    static encoding = size(u8(), {}, fields({ data: array(u8()) }))
+}
+
+class SizeIncluded {
+    constructor(text) {
+        this.text = text;
+    }
+
+    static encoding = definition((sizeIncluded) =>
         size(sizeIncluded, {},
             sequence(
                 sizeIncluded(u8()),
-                fields({
-                    testSizeIncluded: bytes()
-                }),
-                //call(() => {throw new Error()})
+                fields({ text: ascii() })
             )
-        ),
+        )
+    )
+}
+
+class Body {
+    constructor(content) {
+        this.content = content;
+    }
+
+    static encoding =
         fields({
-            testFixedBytes: bytes(4)
-        }),
-    ));
+            content: bytes(3),
+        });
 }
 
 class Message {
@@ -39,29 +56,35 @@ class Message {
         this.version = version;
         this.extra = extra;
         this.body = body;
+        this.sizePrefix = new SizePrefix([0, 1, 2]);
+        this.sizeIncluded = new SizeIncluded("hello");
+        this.sizeSeparate = new SizeSeparate("world");
     }
+
+    static encoding = sequence(
+        fields({ version: u16() }),
+        fixed(u24(), 1),
+        dynamic(v => v.version >= 0 && fields({ extra: u8() })),
+        fields({
+            body: type(u8(), {
+                3: Body,
+            }),
+
+            sizeSeparate: auto(),
+            sizeIncluded: auto(),
+            sizePrefix: auto(),
+        }),
+        ignore(2),
+    );
 }
 
-Message.encoding = sequence(
-    fields({ version: u8() }),
-    fixed(u8(), 1),
-    dynamic(v => v.version >= 0 && fields({ extra: u8() })),
-    fields({
-        body: type(u8(), {
-            3: Body,
-        })
-    }),
-    ignore(2),
-);
 
-
-let writeMessage = new Message(0, 2, new Body(0x40506, [7, 8, 9], [10, 11, 12, 13]));
+let writeMessage = new Message(0, 2, new Body(new Uint8Array([4, 5, 6])));
 
 let data = write(writeMessage);
-//console.log('data>',new Uint8Array(data).join(','));
+console.log('data>', new Uint8Array(data).join(','));
 console.log(explain(data, Message));
 let readMessage = read(data, Message);
-// @ts-ignore
 deepStrictEqual(readMessage, writeMessage);
 
 

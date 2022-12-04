@@ -1,5 +1,6 @@
-const Annotated = require("../annotate/Annotated");
-const getEncoding = require("../getEncoding");
+import Annotated from "../annotate/Annotated.js";
+import { wrap } from "../capture.js";
+import getEncoding from "../getEncoding.js";
 
 class Fixed extends Annotated {
     constructor(encoding, value) {
@@ -24,4 +25,4 @@ class Fixed extends Annotated {
     }
 }
 
-module.exports = (...args) => new Fixed(...args);
+export default wrap((...args) => new Fixed(...args));

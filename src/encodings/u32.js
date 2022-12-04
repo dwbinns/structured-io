@@ -1,4 +1,4 @@
-const AnnotatedValue = require("../annotate/AnnotatedValue");
+import AnnotatedValue from "../annotate/AnnotatedValue.js";
 
 class U32 extends AnnotatedValue {
     read(bufferReader) {
@@ -9,4 +9,4 @@ class U32 extends AnnotatedValue {
     }
 }
 
-module.exports = (...args) => new U32(...args);
+export default (...args) => new U32(...args);

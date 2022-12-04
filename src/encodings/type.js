@@ -1,6 +1,7 @@
-const getEncoding = require("../getEncoding");
-const Definition = require("../definitions/Definition");
-const Annotated = require("../annotate/Annotated");
+import getEncoding from "../getEncoding.js";
+import Definition from "../definitions/Definition.js";
+import Annotated from "../annotate/Annotated.js";
+import { wrap } from "../capture.js";
 
 class Type extends Annotated {
     constructor(type, options, defaultClass, defaultField = "code") {
@@ -43,5 +44,5 @@ class Type extends Annotated {
     }
 }
 
-module.exports = (...args) => new Type(...args);
+export default wrap((...args) => new Type(...args));
 

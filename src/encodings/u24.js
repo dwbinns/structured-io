@@ -1,4 +1,5 @@
-const AnnotatedValue = require("../annotate/AnnotatedValue");
+import AnnotatedValue from "../annotate/AnnotatedValue.js";
+import { wrap } from "../capture.js";
 
 class U24 extends AnnotatedValue {
     read(bufferReader) {
@@ -10,5 +11,5 @@ class U24 extends AnnotatedValue {
 
 }
 
-module.exports = (...args) => new U24(...args);
+export default wrap((...args) => new U24(...args));
 

@@ -1,4 +1,4 @@
-const Encoding = require("../Encoding");
+import Encoding from "../Encoding.js";
 
 class Configure extends Encoding {
     constructor(configuration, contentEncoding) {
@@ -21,5 +21,5 @@ class Configure extends Encoding {
     }
 }
 
-module.exports = (configuration) =>
+export default (configuration) =>
     (where, contentEncoding) => new Configure(configuration, contentEncoding);

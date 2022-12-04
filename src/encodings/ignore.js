@@ -1,4 +1,4 @@
-const Annotated = require("../annotate/Annotated");
+import Annotated from "../annotate/Annotated.js";
 
 class Ignore extends Annotated {
     constructor(size) {
@@ -16,4 +16,4 @@ class Ignore extends Annotated {
     }
 }
 
-module.exports = (...args) => new Ignore(...args);
+export default (...args) => new Ignore(...args);

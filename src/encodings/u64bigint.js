@@ -1,4 +1,5 @@
-const Annotated = require("../annotate/Annotated");
+import Annotated from "../annotate/Annotated.js";
+import { wrap } from "../capture.js";
 
 class U64bigint extends Annotated {
     read(bufferReader) {
@@ -9,4 +10,4 @@ class U64bigint extends Annotated {
     }
 }
 
-module.exports = () => new U64bigint();
+export default wrap(() => new U64bigint());

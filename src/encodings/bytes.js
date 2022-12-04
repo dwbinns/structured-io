@@ -1,4 +1,5 @@
-const Annotated = require("../annotate/Annotated");
+import Annotated from "../annotate/Annotated.js";
+import { wrap } from "../capture.js";
 
 class Bytes extends Annotated {
     constructor(size) {
@@ -19,4 +20,4 @@ class Bytes extends Annotated {
     }
 }
 
-module.exports = size => new Bytes(size);
+export default wrap(size => new Bytes(size));

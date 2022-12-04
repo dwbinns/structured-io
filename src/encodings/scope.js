@@ -1,5 +1,5 @@
-// const Encoding = require("../Encoding");
-// const annotate = require("./annotate");
+// import Encoding from "../Encoding.js";
+// import annotate from "./annotate.js";
 
 
 // function region(name) {
@@ -46,7 +46,7 @@
 // }
 
 
-// module.exports = function scope(name, factory = [name, name = null][0]) {
+// export default function scope(name, factory = [name, name = null][0]) {
 //     return annotate(v => `scope: ${name}`, new class ScopeEncoding extends Encoding {
 //         read(bufferReader, value) {
 //             let regions = new Array(factory.length).fill().map(() => region(name));

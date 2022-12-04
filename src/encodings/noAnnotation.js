@@ -1,5 +1,5 @@
-const AnnotateContext = require("../annotate/AnnotateContext");
-const Encoding = require("../Encoding");
+import AnnotateContext from "../annotate/AnnotateContext.js";
+import Encoding from "../Encoding.js";
 
 class NoAnnotation extends Encoding {
     constructor(content) {
@@ -14,4 +14,4 @@ class NoAnnotation extends Encoding {
     }
 }
 
-module.exports = (content) => new NoAnnotation(content);
+export default (content) => new NoAnnotation(content);

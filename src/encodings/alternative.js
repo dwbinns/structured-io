@@ -1,6 +1,6 @@
-const transform = require("./transform");
+import transform from "./transform.js";
 
-module.exports = function alternative(fieldSpecification, options) {
+export default function alternative(fieldSpecification, options) {
     let valueLookup = new Map(Object.entries(options).map(([key, value]) => [value, Number(key)]));
     let codeLookup = new Map(Object.entries(options).map(([key, value]) => [Number(key), value]));
 

@@ -1,8 +1,8 @@
-const Encoding = require("./Encoding");
-const instance = require("./encodings/instance");
+import Encoding from "./Encoding.js";
+import instance from "./encodings/instance.js";
 
-module.exports = specification => {
+export default specification => {
     if (specification instanceof Encoding) return specification;
-    if (specification && specification.encoding instanceof Encoding) return instance(specification);
+    if (specification && specification.encoding instanceof Encoding) return instance.original(specification);
     return Encoding.check(specification);
-}
+};

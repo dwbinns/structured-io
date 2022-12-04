@@ -1,3 +1,3 @@
-const Encoding = require("../Encoding");
+import Encoding from "../Encoding.js";
 
-module.exports = (where, constructor) => Encoding.ofClass(constructor);
+export default (where, constructor) => Encoding.ofClass(constructor);

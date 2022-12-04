@@ -1,6 +1,7 @@
-const getEncoding = require("../getEncoding");
-const Definition = require("../definitions/Definition");
-const Annotated = require("../annotate/Annotated");
+import getEncoding from "../getEncoding.js";
+import Definition from "../definitions/Definition.js";
+import Annotated from "../annotate/Annotated.js";
+import { wrap } from "../capture.js";
 
 class ArrayEncoding extends Annotated {
     constructor(size, content) {
@@ -36,6 +37,8 @@ class ArrayEncoding extends Annotated {
 
 }
 
-module.exports = (a1, a2) => a2
-    ? new ArrayEncoding(a1, a2)
-    : new ArrayEncoding(null, a1);
+export default wrap((a1, a2) =>
+    a2
+        ? new ArrayEncoding(a1, a2)
+        : new ArrayEncoding(null, a1)
+);

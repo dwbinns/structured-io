@@ -1,3 +1,3 @@
-const string = require("./string");
+import string from "./string.js";
 
-module.exports = (size) => string("latin1", size);
+export default (size) => string("latin1", size);

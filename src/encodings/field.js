@@ -1,5 +1,6 @@
-const Annotated = require("../annotate/Annotated");
-const getEncoding = require("../getEncoding");
+import Annotated from "../annotate/Annotated.js";
+import { wrap } from "../capture.js";
+import getEncoding from "../getEncoding.js";
 
 class Field extends Annotated {
     constructor(name, fieldDefinition) {
@@ -23,4 +24,4 @@ class Field extends Annotated {
 
 }
 
-module.exports = (name, fieldDefinition) => new Field(name, fieldDefinition);
+export default wrap((name, fieldDefinition) => new Field(name, fieldDefinition));

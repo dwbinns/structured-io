@@ -1,7 +1,6 @@
-const Encoding = require("../Encoding");
-const Definition = require("../definitions/Definition");
-const { getLocation } = require("../capture");
-
+import Encoding from "../Encoding.js";
+import Definition from "../definitions/Definition.js";
+import { getLocation } from '../capture.js';
 
 class Define extends Encoding {
     constructor(factory) {
@@ -25,4 +24,4 @@ class Define extends Encoding {
     }
 }
 
-module.exports = (...args) => new Define(...args);
+export default (...args) => new Define(...args);

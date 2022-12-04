@@ -1,53 +1,50 @@
-const {wrap} = require('./capture');
+// Classes to instantiate or extend:
+export { default as Annotated } from './annotate/Annotated.js'
+export { default as AnnotatedValue } from './annotate/AnnotatedValue.js'
+export { default as Encoding } from './Encoding.js'
+export { default as Reader } from './Reader.js'
+export { default as Writer } from './Writer.js'
 
-module.exports = {
-    // Classes to instantiate or extend:
-    Annotated: require('./annotate/Annotated'),
-    AnnotatedValue: require('./annotate/AnnotatedValue'),
-    Encoding: require('./Encoding'),
-    PacketProcessor: require('./PacketProcessor'),
+// functions to encode or decode data:
+export { default as read } from './read.js'
+export { default as write } from './write.js'
+export { default as explain } from './explain.js'
 
-    // functions to encode or decode data:
-    read: wrap(require('./read')),
-    write: wrap(require('./write')),
-    explain: wrap(require('./explain')),
+// Encodings to describe data:
+export { default as array } from './encodings/array.js'
+export { default as arrayLength } from './encodings/arrayLength.js'
+export { default as ascii } from './encodings/ascii.js'
+export { default as auto } from './encodings/auto.js'
+export { default as bigEndian } from './encodings/bigEndian.js'
+export { default as bitSet } from './encodings/bitSet.js'
+export { default as bytes } from './encodings/bytes.js'
+export { default as call } from './encodings/call.js'
+export { default as condition } from './encodings/condition.js'
+export { default as definition } from './encodings/define.js'
+export { default as dynamic } from './encodings/dynamic.js'
+export { default as field } from './encodings/field.js'
+export { default as fields } from './encodings/fields.js'
+export { default as fixed } from './encodings/fixed.js'
+export { default as ignore } from './encodings/ignore.js'
+export { default as instance } from './encodings/instance.js'
+export { default as latin1 } from './encodings/latin1.js'
+export { default as littleEndian } from './encodings/littleEndian.js'
+export { default as noAnnotation } from './encodings/noAnnotation.js'
+export { default as nothing } from './encodings/nothing.js'
+export { default as optional } from './encodings/optional.js'
+export { default as pad } from './encodings/pad.js'
+export { default as sequence } from './encodings/sequence.js'
+export { default as size } from './encodings/size.js'
+export { default as string } from './encodings/string.js'
+export { default as transform } from './encodings/transform.js'
+export { default as type } from './encodings/type.js'
+export { default as u8 } from './encodings/u8.js'
+export { default as u16 } from './encodings/u16.js'
+export { default as u24 } from './encodings/u24.js'
+export { default as u32 } from './encodings/u32.js'
+export { default as s32 } from './encodings/s32.js'
+export { default as u64bigint } from './encodings/u64bigint.js'
+export { default as utf8 } from './encodings/utf8.js'
 
-    // Encodings to describe data:
-    array: wrap(require('./encodings/array')),
-    arrayLength: wrap(require('./encodings/arrayLength')),
-    ascii: wrap(require('./encodings/ascii')),
-    auto: wrap(require('./encodings/auto')),
-    bigEndian: wrap(require('./encodings/bigEndian')),
-    bitSet: wrap(require('./encodings/bitSet')),
-    bytes: wrap(require('./encodings/bytes')),
-    call: wrap(require('./encodings/call')),
-    collect: wrap(require('./encodings/collect')),
-    condition: wrap(require('./encodings/condition')),
-    definition: wrap(require('./encodings/define')),
-    dynamic: wrap(require('./encodings/dynamic')),
-    field: wrap(require('./encodings/field')),
-    fields: wrap(require('./encodings/fields')),
-    fixed: wrap(require('./encodings/fixed')),
-    ignore: wrap(require('./encodings/ignore')),
-    instance: wrap(require('./encodings/instance')),
-    latin1: wrap(require('./encodings/latin1')),
-    littleEndian: wrap(require('./encodings/littleEndian')),
-    noAnnotation: wrap(require('./encodings/noAnnotation')),
-    nothing: wrap(require('./encodings/nothing')),
-    optional: wrap(require('./encodings/optional')),
-    pad: wrap(require('./encodings/pad')),
-    scope: wrap(require('./encodings/scope')),
-    sequence: wrap(require('./encodings/sequence')),
-    size: wrap(require('./encodings/size')),
-    sized: wrap(require('./encodings/sized')),
-    string: wrap(require('./encodings/string')),
-    transform: wrap(require('./encodings/transform')),
-    type: wrap(require('./encodings/type')),
-    u8: wrap(require('./encodings/u8')),
-    u16: wrap(require('./encodings/u16')),
-    u24: wrap(require('./encodings/u24')),
-    u32: wrap(require('./encodings/u32')),
-    u64bigint: wrap(require('./encodings/u64bigint')),
-};
 
 

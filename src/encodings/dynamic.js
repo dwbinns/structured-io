@@ -1,5 +1,5 @@
-const Encoding = require("../Encoding");
-const getEncoding = require("../getEncoding");
+import Encoding from "../Encoding.js";
+import getEncoding from "../getEncoding.js";
 
 class Dynamic extends Encoding {
     constructor(encodingFactory) {
@@ -17,4 +17,4 @@ class Dynamic extends Encoding {
     }
 }
 
-module.exports = (encodingFactory) => new Dynamic(encodingFactory);
+export default (encodingFactory) => new Dynamic(encodingFactory);

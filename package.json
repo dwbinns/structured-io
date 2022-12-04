@@ -1,24 +1,22 @@
 {
   "name": "structured-io",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "JavaScript read and write structured data to packed byte structures",
-  "main": "src/index.js",
-  "directories": {
-    "test": "test"
-  },
+  "exports": "./src/index.js",
+  "type": "module",
   "scripts": {
-    "test": "node test",
-    "coverage": "c8 -r html -r text --src src --all node test"
+    "test": "node --test"
   },
   "keywords": [],
   "author": "David Binns <dwbinnspublic+git@gmail.com>",
   "license": "MIT",
-  "devDependencies": {
-    "c8": "^7.3.0"
-  },
   "repository": "github:dwbinns/structured-io",
   "dependencies": {
+    "@dwbinns/terminal": "^1.6.0",
     "auto-creating-map": "1.0.0",
-    "buffer-io": "^2.0.0"
-  }
+    "buffer-io": "^2.1.0"
+  },
+  "workspaces": [
+    "deps/*"
+  ]
 }

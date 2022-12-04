@@ -1,6 +1,6 @@
 
-const Encoding = require("../Encoding");
-const getEncoding = require("../getEncoding");
+import Encoding from "../Encoding.js";
+import getEncoding from "../getEncoding.js";
 const {ceil} = Math;
 
 class Pad extends Encoding {
@@ -24,4 +24,4 @@ class Pad extends Encoding {
     }
 }
 
-module.exports = (...args) => new Pad(...args);
+export default (...args) => new Pad(...args);

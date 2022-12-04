@@ -1,10 +1,11 @@
-const { BufferReader } = require('buffer-io');
-const AnnotateContext = require('./annotate/AnnotateContext');
-const { getLocation } = require('./capture');
-const getEncoding = require('./getEncoding');
+import { BufferReader } from 'buffer-io';
+import AnnotateContext from './annotate/AnnotateContext.js';
+import { getLocation, wrap } from './capture.js';
+import getEncoding from './getEncoding.js';
+import tree from "@dwbinns/terminal/tree";
 
 
-module.exports = function explain(uint8array, specification, parentContext) {
+export default wrap(function explain(uint8array, specification, parentContext) {
     let reader = new BufferReader(uint8array);
     let context = parentContext || new AnnotateContext();
     let node = context.child(reader, "explain", getLocation());
@@ -16,7 +17,12 @@ module.exports = function explain(uint8array, specification, parentContext) {
     } catch(e) {
         console.log(e);
     } finally {
-        context.finish('explain', node);
-        if (!parentContext) console.log(context.toTree().renderLines().join("\n"));
+        context.finish('', node);
+        if (!parentContext) console.log(
+            tree({
+                node: context.root,
+                getChildren: node => node.children || []
+            })
+        );
     }
-}
+});

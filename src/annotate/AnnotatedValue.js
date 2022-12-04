@@ -1,4 +1,4 @@
-const Annotated = require("./Annotated");
+import Annotated from "./Annotated.js";
 
 class AnnotatedValue extends Annotated {
     explain(value) {
@@ -6,4 +6,4 @@ class AnnotatedValue extends Annotated {
     }
 }
 
-module.exports = AnnotatedValue
+export default AnnotatedValue

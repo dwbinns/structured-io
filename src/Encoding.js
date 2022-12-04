@@ -10,7 +10,7 @@ class Encoding {
 
     static check(encoding) {
         if (encoding instanceof Encoding) return encoding;
-        throw new Encoding.NotAnEncoding();
+        throw new Encoding.NotAnEncoding(encoding?.constructor);
     }
 
     static NotAnEncoding = NotAnEncoding;
@@ -18,4 +18,4 @@ class Encoding {
 
 
 
-module.exports = Encoding;
+export default Encoding;

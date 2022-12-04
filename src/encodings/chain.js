@@ -1,4 +1,4 @@
-const Encoding = require("../Encoding");
+import Encoding from "../Encoding.js";
 
 class Chain {
     constructor(components) {
@@ -15,4 +15,4 @@ class Chain {
     }
 }
 
-module.exports = (where, ...components) => new Chain(components);
+export default (where, ...components) => new Chain(components);

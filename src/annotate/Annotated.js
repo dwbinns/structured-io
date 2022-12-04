@@ -1,6 +1,6 @@
-const Encoding = require("../Encoding");
-const { getLocation } = require("../capture");
-const AnnotateContext = require("./AnnotateContext");
+import Encoding from "../Encoding.js";
+import { getLocation } from "../capture.js";
+import AnnotateContext from "./AnnotateContext.js";
 
 
 class Annotated extends Encoding {
@@ -19,7 +19,7 @@ class Annotated extends Encoding {
 
                 let result = read.call(this, bufferReader, value);
                 if (this.decode) this.decode(result, context);
-                context.finish(`${this.annotation} ${this.explain(result)}`, annotationNode);
+                context.finish(this.explain(result), annotationNode);
                 return result;
             } catch (e) {
                 //annotationNode.cancel();
@@ -45,7 +45,7 @@ class Annotated extends Encoding {
     }
 
     explain(value) {
-        return value ? value.constructor.name : "";
+        return value ? `${value.constructor.name}{}` : "";
     }
 
 
@@ -56,4 +56,4 @@ class Annotated extends Encoding {
     }
 }
 
-module.exports = Annotated;
+export default Annotated;

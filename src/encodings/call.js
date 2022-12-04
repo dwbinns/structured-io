@@ -1,4 +1,4 @@
-const Encoding = require("../Encoding");
+import Encoding from "../Encoding.js";
 
 class Call extends Encoding {
     constructor(handler) {
@@ -14,4 +14,4 @@ class Call extends Encoding {
     }
 }
 
-module.exports = (...args) => new Call(...args);
+export default (...args) => new Call(...args);

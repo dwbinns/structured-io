@@ -1,5 +1,5 @@
-const Encoding = require("../Encoding");
-const getEncoding = require("../getEncoding");
+import Encoding from "../Encoding.js";
+import getEncoding from "../getEncoding.js";
 
 class Endian extends Encoding {
     constructor(littleEndian, contentEncoding) {
@@ -22,4 +22,4 @@ class Endian extends Encoding {
 }
 
 
-module.exports = (littleEndian, contentEncoding) => new Endian(littleEndian, contentEncoding);
+export default (littleEndian, contentEncoding) => new Endian(littleEndian, contentEncoding);

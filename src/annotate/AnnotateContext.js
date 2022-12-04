@@ -1,15 +1,4 @@
-const Tree = require("../Tree");
-const tty = require("tty");
-
-const useColour = process.stdout.isTTY;
-
-const red = useColour ? '\x1b[31m' : '';
-const green = useColour ? '\x1b[32m' : '';
-const yellow = useColour ? '\x1b[33m' : '';
-const blue = useColour ? '\x1b[34m' : '';
-const magenta = useColour ? '\x1b[35m' : '';
-const cyan = useColour ? '\x1b[36m' : '';
-const normal = useColour ? '\x1b[m' : '';
+import { yellow, blue, cyan, green } from "@dwbinns/terminal/colour";
 
 let serial = 0;
 
@@ -18,7 +7,7 @@ class AnnotationNode {
         this.parent = parent;
         this.bufferReader = bufferReader;
         this.start = this.bufferReader.index;
-        this.children = [];
+        this.childNodes = [];
         this.text = text;
         this.location = location;
         this.serial = serial++;
@@ -26,47 +15,53 @@ class AnnotationNode {
 
 
     format(from, to) {
-        return yellow
-            + [...this.bufferReader.uint8array.subarray(from, to)]
+        if (from == to) return "";
+        return "<" + yellow(
+            [...this.bufferReader.uint8array.subarray(from, to)]
                 .map(v => v.toString(16).padStart(2, '0'))
                 .join(":")
-            + normal;
+        ) + ">";
     }
 
     formatLocation() {
-        return blue + this.location + normal;
+        return blue(this.location);
     }
 
-    toTree() {
+    get firstChildStart() {
+        let firstInline = this.childNodes.filter(child => child.bufferReader.uint8array == this.bufferReader.uint8array)[0];
+        return firstInline ? firstInline.start : this.end;
+    }
+
+    toString() {
+        return `${cyan(this.text)} ${green(this.value)} ${this.format(this.start, this.firstChildStart)} ${this.formatLocation()}`;
+    }
+
+    get children() {
         let children = [];
-        let position = this.start;
-        let firstChildStart = position;
-        for (let child of this.children) {
+        let position = this.firstChildStart;
+        for (let child of this.childNodes) {
             const inline = child.bufferReader.uint8array == this.bufferReader.uint8array;
             if (inline && position < child.start) {
-                if (position == this.start) firstChildStart = child.start;
-                else children.push(new Tree(this.format(position, child.start)));
+                children.push(this.format(position, child.start));
             }
-            children.push(child.toTree());
+            children.push(child);
             if (inline) position = child.end;
         }
-        if (position == this.start) position = firstChildStart = this.end;
-        if (position < this.end) children.push(new Tree(this.format(position, this.end)));
-
-        return new Tree(`${this.text} <${this.format(this.start, firstChildStart)}> ${this.formatLocation()}`, children);
-        //return new Tree(`${this.text} ${this.formatLocation()}`, children);
+        if (position < this.end) {
+            children.push(this.format(position, this.end));
+        }
+        return children;
     }
 
-
-    finish(text = this.text) {
-        this.text = text;
+    finish(value) {
+        this.value = value;
         this.end = this.bufferReader.index;
     }
 }
 
 
 
-module.exports = class AnnotateContext {
+export default class AnnotateContext {
     static symbol = Symbol("AnnotationContext");
 
     getCurrentNode() {
@@ -77,10 +72,6 @@ module.exports = class AnnotateContext {
         this.node = currentNode;
     }
 
-    toTree() {
-        return this.root.toTree();
-    }
-
     child(bufferReader, text, location) {
         let child = new AnnotationNode(this.node, bufferReader, text, location);
         if (!this.node) this.root = child;
@@ -89,9 +80,9 @@ module.exports = class AnnotateContext {
         return child;
     }
 
-    finish(text, child) {
-        if (child.parent) child.parent.children.push(child);
-        child.finish(text);
+    finish(value, child) {
+        if (child.parent) child.parent.childNodes.push(child);
+        child.finish(value);
         this.node = child.parent;
     }
 }
