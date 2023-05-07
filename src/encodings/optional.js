@@ -20,7 +20,7 @@ class Optional extends Encoding {
 
     }
     write(bufferWriter, value) {
-        if (value == this.defaultValue) return;
+        if (value === this.defaultValue) return;
         this.contentEncoding.write(bufferWriter, value);
     }
 }
