@@ -1,6 +1,6 @@
 {
   "name": "structured-io",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "JavaScript read and write structured data to packed byte structures",
   "exports": "./src/index.js",
   "type": "module",
