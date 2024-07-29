@@ -49,6 +49,10 @@ class Definition {
         return definition;
     }
 
+    define(contentEncoding) {
+        return new Attach(this, contentEncoding);
+    }
+
 
     get() {
         this.checkDefined();

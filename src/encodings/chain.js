@@ -1,8 +1,11 @@
 import Encoding from "../Encoding.js";
+import getEncoding from "../getEncoding.js";
 
-class Chain {
+class Chain extends Encoding {
     constructor(components) {
-        this.components = Encoding.getAll(components);
+        super();
+
+        this.components = components.map(getEncoding);
     }
 
     read(bufferReader, value) {
@@ -15,4 +18,4 @@ class Chain {
     }
 }
 
-export default (where, ...components) => new Chain(components);
+export default (...components) => new Chain(components);

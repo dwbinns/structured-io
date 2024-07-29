@@ -52,6 +52,7 @@ export default class Reader {
     }
 
     append(uint8array) {
+        if (this.log) console.log("append", uint8array.length);
         this.resizableBuffer.get(this.size + uint8array.length).uint8array.set(uint8array, this.size);
         this.size += uint8array.length;
         this.check();
@@ -60,6 +61,7 @@ export default class Reader {
     check() {
         while (this.encoding && this.size > 0) {
             try {
+                //if (this.log) console.log("check", this.size);
                 let bufferReader = new BufferReader(this.resizableBuffer.uint8array.subarray(0, this.size));
                 let result = this.encoding.read(bufferReader);
                 let readSize = bufferReader.index;
@@ -73,7 +75,6 @@ export default class Reader {
                 if (!(e instanceof OverflowError)) {
                     this.onError?.(e);
                 }
-
                 break;
             }
         }

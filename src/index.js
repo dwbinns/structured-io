@@ -19,6 +19,7 @@ export { default as bigEndian } from './encodings/bigEndian.js'
 export { default as bitSet } from './encodings/bitSet.js'
 export { default as bytes } from './encodings/bytes.js'
 export { default as call } from './encodings/call.js'
+export { default as chain } from './encodings/chain.js'
 export { default as condition } from './encodings/condition.js'
 export { default as definition } from './encodings/define.js'
 export { default as dynamic } from './encodings/dynamic.js'
@@ -45,6 +46,7 @@ export { default as u32 } from './encodings/u32.js'
 export { default as s32 } from './encodings/s32.js'
 export { default as u64bigint } from './encodings/u64bigint.js'
 export { default as utf8 } from './encodings/utf8.js'
+export { default as onRead } from './encodings/onRead.js'
 
 
 

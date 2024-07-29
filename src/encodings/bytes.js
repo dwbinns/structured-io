@@ -12,6 +12,9 @@ class Bytes extends Annotated {
     }
 
     read(bufferReader, value) {
+        if (this.size == undefined) {
+            return bufferReader.readBytes(value.length);
+        }
         return bufferReader.readBytes(this.size);
     }
     write(bufferWriter, value) {
